@@ -1,0 +1,26 @@
+schema_version: 1
+model:
+  graph:
+    inputs: [x]
+    modules:
+      stem:
+        _type_: conv_bn_act
+        in_channels: null
+        out_channels: 16
+        kernel_size: 3
+        padding: 1
+      main:
+        _type_: conv_bn_act
+        in_channels: 16
+        out_channels: 16
+        kernel_size: 3
+        padding: 1
+        act: {_type_: nn.Identity}
+    nodes:
+      h1: {call: module:stem, args: [$x]}
+      h2: {call: module:main, args: [$h1]}
+      h3: {call: op:add, args: [$h1, $h2]}
+    order: [h1, h2, h3]
+    outputs: [$h3]
+    return: single
+
