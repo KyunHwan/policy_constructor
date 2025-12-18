@@ -4,9 +4,9 @@ from ..registry.registry import Registry
 
 
 def register_blocks(registry: Registry) -> None:
-    from .conv import ConvBnAct
-    from .mlp import MLP
-    from .residual import ResidualBlock
+    from .basic_blocks.conv import ConvBnAct
+    from .basic_blocks.mlp import MLP
+    from .basic_blocks.residual import ResidualBlock
 
     registry.register_module("conv_bn_act", ConvBnAct, signature_policy="strict", tags=("blocks", "conv"))
     registry.register_module("mlp", MLP, signature_policy="strict", tags=("blocks", "mlp"))
