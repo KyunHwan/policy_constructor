@@ -10,7 +10,7 @@ Both repos reuse:
 - the same custom block registration module (or equivalent)
 
 See also:
-- `docs/integration.md`
+- `../README.md` (Integration section)
 - `model_constructor/blocks/README.md`
 
 ## 1) Training repository layout

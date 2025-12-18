@@ -53,3 +53,13 @@ print(reg.list_modules())
 print(reg.list_ops())
 ```
 
+## Common errors
+
+### `ConfigError: Unknown module type '...'` / `ConfigError: Unknown op '...'`
+
+You used an unregistered `_type_` (module) or `op:<name>` (op).
+
+Fix:
+- check for typos
+- ensure your custom block registration is executed (via YAML `imports` or parent-code registration)
+- list available built-ins with the snippet above

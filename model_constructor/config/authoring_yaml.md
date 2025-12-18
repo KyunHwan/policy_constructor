@@ -232,3 +232,21 @@ Supported settings (see `model_constructor/config/settings.py`):
 - `allow_imports` (default true): enables `imports`
 - `allowed_import_prefixes` (default `["model_constructor."]`): allowed module prefixes for `imports` (and `_target_` if enabled)
 - `allow_target` (default false): allows `_target_` import-by-string
+
+## Common errors
+
+### `ConfigError: nodes mapping form requires 'order: [..]'`
+
+When `model.graph.nodes` is written as a mapping, `order` is required for deterministic execution (do not rely on YAML key order).
+
+Fix:
+- add `order: [name1, name2, ...]`, or
+- switch to the canonical list form for `nodes`.
+
+### `_target_ is disabled by settings.allow_target`
+
+This repo is safe-by-default: `_target_` is off unless explicitly enabled.
+
+Fix:
+- prefer `_type_` registry keys (recommended), or
+- enable `_target_` in settings (expert mode) and allow the module prefix.

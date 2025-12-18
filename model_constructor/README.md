@@ -3,7 +3,7 @@
 This directory is the **entire construct-only model builder**. It is designed to be vendored as a submodule inside training repositories and inference repositories without coupling to either.
 
 If you are new, start with:
-- `docs/overview.md`
+- `../README.md` (overview + integration)
 - `model_constructor/config/schema_v1.md` (normative YAML contract)
 - `model_constructor/config/authoring_yaml.md` (practical YAML examples)
 
@@ -17,7 +17,7 @@ If you are new, start with:
   - The main integration surface. Parent repositories should call `build_model(...)` and treat the returned module as a normal `torch.nn.Module`.
   - Internally orchestrates: config resolution → optional imports/registration → IR compilation → module instantiation → `GraphModel`.
 - `model_constructor/compat.py`
-  - Enforces minimum supported PyTorch version (see `docs/compatibility.md`).
+  - Enforces minimum supported PyTorch version (see `../README.md`).
 - `model_constructor/errors.py`
   - Defines `ConfigError` and other error types. Most user-facing failures should be raised as `ConfigError` with a helpful path and (best-effort) source location.
 
@@ -158,7 +158,6 @@ print(y.shape)
 If you intend to embed `model_constructor` as a submodule, prefer defining your custom blocks in the parent repo and registering them via YAML `imports`.
 
 Start with:
-- `docs/integration.md`
+- `../README.md` (Integration section)
 - `model_constructor/blocks/README.md` (Option B)
 - `examples/end_to_end.md`
-

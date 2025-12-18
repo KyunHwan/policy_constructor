@@ -16,5 +16,32 @@ Safety controls are enforced via settings:
 - `settings.allow_imports` (default true)
 - `settings.allowed_import_prefixes` (default `["model_constructor."]`)
 
-See `docs/integration.md` and `model_constructor/blocks/README.md` for examples.
+See `../README.md` (Integration section) and `model_constructor/blocks/README.md` for examples.
 
+## Common errors
+
+### `ConfigError: imports are disabled`
+
+`imports` was turned off via `settings.allow_imports: false`.
+
+Fix:
+- remove `imports` if you don’t need it, or
+- enable it explicitly:
+
+```yaml
+settings:
+  allow_imports: true
+```
+
+### `ConfigError: import ... is not allowed`
+
+The import prefix guard rejected the module you tried to load.
+
+Fix: allow your parent repo’s package prefix:
+
+```yaml
+settings:
+  allowed_import_prefixes: ["model_constructor.", "my_project."]
+imports:
+  - my_project.model_blocks
+```

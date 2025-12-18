@@ -32,6 +32,16 @@ Graph steps read inputs from a runtime context by using `$name` references:
 
 If you need recurrence, implement it inside a block module and call that module from the graph.
 
+## Common errors
+
+### `ConfigError: Forward reference(s) not allowed`
+
+Graph execution is DAG-only: any `$name` reference must refer to a graph input or a value produced by an earlier step/node.
+
+Fix:
+- reorder nodes/steps so producers come before consumers, or
+- move recurrence/iteration inside a block module and call that module from the graph
+
 ## Outputs
 
 `outputs` can be:
@@ -45,4 +55,3 @@ Output collisions and missing refs are errors in strict mode.
 Compilation happens in `model_constructor/graph/compiler.py`:
 - `model.sequential` -> linear `GraphIR`
 - `model.graph` -> `GraphIR` with DAG checks and deterministic execution ordering
-
