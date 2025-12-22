@@ -73,10 +73,10 @@ class RadioV3(nn.Module):
             summary, features = self.model(x, feature_fmt="NCHW")
 
         # Wrap in lists to match BaseBackbone interface (single scale)
-        return [features], [summary]
+        return features, summary
 
-register_backbone_builder("radiov3", lambda cfg, **_: RadioV3(channels=getattr(cfg, "channels", (1024, 3072)), 
-                                                              device=getattr(cfg, "device", "cuda")))
+# register_backbone_builder("radiov3", lambda cfg, **_: RadioV3(channels=getattr(cfg, "channels", (1024, 3072)), 
+#                                                               device=getattr(cfg, "device", "cuda")))
 
 
 def run_radiov3_test(image_path: str, target_size=(640, 512), device: str = "cpu"):
