@@ -3,12 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn as nn
-
-radiov3_version = "c-radio_v3-l" # 256 x 320 (height x width) --> (16, 20) w/ channel size 1024
-
-from typing import List, Tuple
-
+import torch.nn as nn 
 
 class RadioV3(nn.Module):
     def __init__(self, channels=(1024, 3072), device="cuda"):
@@ -17,10 +12,11 @@ class RadioV3(nn.Module):
         self._device = torch.device(device)
 
         # Load C-RADIOv3-L from TorchHub
+        self.radiov3_version = "c-radio_v3-l" # 448 x 448 (height x width) --> (28, 28) w/ channel size 1024
         self.model = torch.hub.load(
             "NVlabs/RADIO",
             "radio_model",
-            version=radiov3_version,
+            version=self.radiov3_version,
             progress=True,
         ).to(self.device).eval()
 
@@ -74,9 +70,6 @@ class RadioV3(nn.Module):
 
         # Wrap in lists to match BaseBackbone interface (single scale)
         return features, summary
-
-# register_backbone_builder("radiov3", lambda cfg, **_: RadioV3(channels=getattr(cfg, "channels", (1024, 3072)), 
-#                                                               device=getattr(cfg, "device", "cuda")))
 
 
 def run_radiov3_test(image_path: str, target_size=(640, 512), device: str = "cpu"):
