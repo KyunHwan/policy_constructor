@@ -9,7 +9,7 @@ def register_blocks(registry: Registry) -> None:
     from .basic_blocks.residual import ResidualBlock
 
     from .experiments.backbones.vision import 
-    from .experiments.body.flow_matching.naive_flow_matching import 
+    from .experiments.body.flow_matching.naive_flow_matching.naive_flow_matching_decoder import 
 
 
     registry.register_module("conv_bn_act", ConvBnAct, signature_policy="strict", tags=("blocks", "conv"))

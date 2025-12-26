@@ -11,7 +11,7 @@ class TransformerDecoder(nn.Module):
                  batch_first: bool,
                  tgt_is_causal: bool,
                  num_layers: int,
-                 action_chunk_size: int,
+                 num_tokens: int,
                  ):
         """
         Parameters:
@@ -37,12 +37,12 @@ class TransformerDecoder(nn.Module):
                                   Warning: tgt_is_causal provides a hint that tgt_mask is the causal mask. 
                                   Providing incorrect hints can result in incorrect execution, including forward and backward compatibility.
             
-            action_chunk_size (int): size of the action chunk (ie. how many actions are in an action chunk)
+            num_tokens (int): number of tokens given as input to the decoder
             
         """
         self.batch_first = batch_first
         self.tgt_is_causal = tgt_is_causal
-        self.action_chunk_size = action_chunk_size
+        self.num_tokens = num_tokens
         self.d_model = d_model
 
         self.decoder = nn.TransformerDecoder(
@@ -52,12 +52,13 @@ class TransformerDecoder(nn.Module):
                                                 dropout=dropout,
                                                 activation=activation,
                                                 dim_feedforward=dim_feedforward,
+                                                batch_first=batch_first
                                             ), 
                             num_layers = num_layers, )
         
         
         # masking self-attention to make the action causal --> similar to diffusion policy
-        self.register_buffer('tgt_causal_mask', torch.nn.Transformer.generate_square_subsequent_mask(self.action_chunk_size))
+        self.register_buffer('tgt_causal_mask', torch.nn.Transformer.generate_square_subsequent_mask(self.num_tokens))
 
     def forward(self, tgt_input: torch.Tensor, memory_input: torch.Tensor) -> torch.Tensor:
         """
@@ -69,13 +70,3 @@ class TransformerDecoder(nn.Module):
                     tgt_mask = self.tgt_causal_mask if self.tgt_is_causal else None,
                     tgt_is_causal=self.tgt_is_causal
                 )
-
-
-    def initialize(self,):
-        """
-            All layers in the TransformerDecoder are initialized with the same parameters. 
-            It is recommended to manually initialize the layers after creating the TransformerDecoder instance.
-        """
-        for p in self.decoder.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_normal_(p)          
