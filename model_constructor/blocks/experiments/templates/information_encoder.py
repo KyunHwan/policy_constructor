@@ -124,39 +124,41 @@ class InformationEncoder(MultiModalEncoderTemplate):
         
         batch_size = cond_proprio.shape[0]
 
-        output = nn.ModuleDict({
+        output = {
             'cls_token': None,
             'encoder_output': None, 
-        })
+        }
 
+        # proprio data
         proprio_input = self.proprio_projection(cond_proprio)
 
+        # visual data
         if cond_visual.ndim == 5: cond_visual = einops.rearrange(cond_visual, 'b, n, c, h, w -> b n (h w) c')
         cond_visual = einops.rearrange(cond_visual, 'b, n, s, c -> b (n, s) c')
         visual_input = self.visual_projection(cond_visual)
 
         encoder_input = torch.cat([visual_input, proprio_input], dim=1) 
-        # [visual_input, proprio_input]
 
+        # semantic data
         if self.use_cond_semantic:
             if not self.use_cond_semantic_projection and cond_semantic.shape[-1] != self.transformer_hidden_dim:
                 raise ValueError(f"cond_semantic must have dimension {self.transformer_hidden_dim}, got {cond_semantic.shape[-1]}!")
             semantic_input = self.semantic_projection(cond_semantic) if self.use_cond_semantic_projection else cond_semantic
             if semantic_input.ndim == 2: 
                 semantic_input = einops.rearrange(semantic_input, 'b d -> b 1 d')
-            encoder_input = torch.cat([semantic_input, encoder_input], dim=1) 
-        # [semantic_input | None, visual_input, proprio_input]
+            encoder_input = torch.cat([semantic_input, encoder_input], dim=1)
         
+        # action data
         if self.use_action: 
             action_input = self.action_projection(action)
-            encoder_input = torch.cat([action_input, encoder_input], dim=1) 
-        # [action_input | None, semantic_input | None, visual_input, proprio_input]
+            encoder_input = torch.cat([action_input, encoder_input], dim=1)
 
-        encoder_input += get_sinusoidal_pos_encoding(encoder_input.shape[1], self.transformer_hidden_dim, encoder_input.device)
+        # position embedding
+        encoder_input = encoder_input + get_sinusoidal_pos_encoding(encoder_input.shape[1], self.transformer_hidden_dim, encoder_input.device)
 
+        # cls token
         if self.use_cls_token:
             encoder_input = torch.cat([self.cls_token.expand(batch_size, -1, -1), encoder_input], dim=1)
-        # [cls_token | None, action_input | None, semantic_input | None, visual_input, proprio_input]
 
         encoder_output = self.encoder(encoder_input)
 

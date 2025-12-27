@@ -103,6 +103,18 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         
         noise_input = self.noise_projection(noise)
         
+        
+        # conditioning
+        memory_input = memory_input + \
+                       get_sinusoidal_pos_encoding(memory_input.shape[1], self.transformer_hidden_dim, memory_input.device)
+
+        # time embedding for flow matching
+        if time.ndim > 1: time = time.squeeze(-1)
+        time_emb = get_time_embedding(time, self.transformer_hidden_dim) # (batch, d_model)
+        time_emb = einops.rearrange(self.time_mlp(time_emb), 'b d -> b 1 d') # (batch, 1, d_model)
+        memory_input = torch.cat([time_emb, memory_input], dim=1)
+
+        # semantic input
         if self.use_cond_semantic:
             if not self.use_cond_semantic_projection and discrete_semantic_input.shape[-1] != self.transformer_hidden_dim:
                 raise ValueError(f"cond_semantic must have dimension {self.transformer_hidden_dim}, got {discrete_semantic_input.shape[-1]}!")
@@ -110,13 +122,6 @@ class ActionDecoder(FlowMatchingBodyTemplate):
             if semantic_input.ndim == 2: 
                 semantic_input = einops.rearrange(semantic_input, 'b d -> b 1 d')
             memory_input = torch.cat([semantic_input, memory_input], dim=1)
-
-        if time.ndim > 1: time = time.squeeze(-1)
-        time_emb = get_time_embedding(time, self.transformer_hidden_dim) # (batch, d_model)
-        time_emb = einops.rearrange(self.time_mlp(time_emb), 'b d -> b 1 d') # (batch, 1, d_model)
-        memory_input = torch.cat([time_emb, memory_input], dim=1)
-        
-        memory_input += get_sinusoidal_pos_encoding(memory_input.shape[1], self.transformer_hidden_dim, memory_input.device)
 
         decoded_output = self.decoder(noise_input, memory_input)
 

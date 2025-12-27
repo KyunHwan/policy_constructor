@@ -55,6 +55,6 @@ class ConditioningInfoEncoder(MultiModalEncoderTemplate):
         return self.encoder(cond_proprio=cond_proprio, 
                             cond_visual=cond_visual,
                             cond_semantic=cond_semantic,
-                            action=action,)
+                            action=action,)['encoder_output']
         
 
