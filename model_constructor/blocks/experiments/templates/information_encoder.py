@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import einops
 
-from .flow_matching import MultiModalEncoderTemplate
-from ...basic_blocks.transformer_encoder import TransformerEncoder
+from .multimodal_encoder import MultiModalEncoderTemplate
+from ...basic_blocks.transformer_encoder import NonCausalTransformerEncoder
 from ..utils.pos_encoding import get_sinusoidal_pos_encoding
 
 
@@ -19,9 +19,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                  transformer_dropout: float,
                  transformer_activation: str,
                  transformer_batch_first: bool,
-                 transformer_is_causal: bool,
                  transformer_num_layers: int,
-                 transformer_num_tokens: int,
                  
                  use_cls_token: bool,
                  use_action: bool,
@@ -89,16 +87,14 @@ class InformationEncoder(MultiModalEncoderTemplate):
             ) for _ in range(num_cameras)]
         )
 
-        self.encoder = TransformerEncoder(
+        self.encoder = NonCausalTransformerEncoder(
             d_model=self.transformer_hidden_dim,
             nhead=transformer_nhead,
             dim_feedforward=transformer_dim_feedforward,
             dropout=transformer_dropout,
             activation=transformer_activation,
             batch_first=transformer_batch_first,
-            is_causal=transformer_is_causal,
             num_layers=transformer_num_layers,
-            num_tokens=transformer_num_tokens,
         )
 
     def forward(self,
@@ -149,7 +145,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
         
         projected_visuals = []
         for i in range(self.num_cameras):
-            projected_visuals.append(self.visual_projection[i](cond_visual[:, i, :, :]))
+            projected_visuals.append(self.visual_projection[i](einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c')))
         projected_visual_input = einops.rearrange(torch.cat(projected_visuals, dim=1), 'b n s c -> b (n s) c')
 
         encoder_input = torch.cat([projected_visual_input, proprio_input], dim=1) 

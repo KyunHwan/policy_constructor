@@ -15,14 +15,12 @@ class VQVAE_Posterior(MultiModalEncoderTemplate):
                  transformer_dropout: float,
                  transformer_activation: str,
                  transformer_batch_first: bool,
-                 transformer_is_causal: bool,
                  transformer_num_layers: int,
-                 transformer_num_tokens: int,
-                 
                  action_dim: int | None,
                  use_cond_semantic: bool,
                  use_cond_semantic_projection: bool,
                  cond_semantic_dim: int | None,
+                 num_cameras: int,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -35,15 +33,14 @@ class VQVAE_Posterior(MultiModalEncoderTemplate):
             transformer_dropout=transformer_dropout,
             transformer_activation=transformer_activation,
             transformer_batch_first=transformer_batch_first,
-            transformer_is_causal=transformer_is_causal,
             transformer_num_layers=transformer_num_layers,
-            transformer_num_tokens=transformer_num_tokens,
             use_cls_token=True,
             use_action=True,
             action_dim=action_dim,
             use_cond_semantic=use_cond_semantic,
             use_cond_semantic_projection=use_cond_semantic_projection,
             cond_semantic_dim=cond_semantic_dim,
+            num_cameras=num_cameras,
             **kwargs
         )
 

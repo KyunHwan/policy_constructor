@@ -16,14 +16,13 @@ class ConditioningInfoEncoder(MultiModalEncoderTemplate):
                  transformer_dropout: float,
                  transformer_activation: str,
                  transformer_batch_first: bool,
-                 transformer_is_causal: bool,
                  transformer_num_layers: int,
-                 transformer_num_tokens: int,
                  
                  use_cond_semantic: bool,
                  cond_semantic_dim: int | None,
+                 num_cameras: int,
                  **kwargs):
-        
+        super().__init__()
         self.encoder = InformationEncoder(
             cond_proprio_dim=cond_proprio_dim,
             cond_visual_dim=cond_visual_dim,
@@ -33,15 +32,14 @@ class ConditioningInfoEncoder(MultiModalEncoderTemplate):
             transformer_dropout=transformer_dropout,
             transformer_activation=transformer_activation,
             transformer_batch_first=transformer_batch_first,
-            transformer_is_causal=transformer_is_causal,
             transformer_num_layers=transformer_num_layers,
-            transformer_num_tokens=transformer_num_tokens,
             use_cls_token=False,
             use_action=False,
             action_dim=None,
             use_cond_semantic=use_cond_semantic,
             use_cond_semantic_projection=False, # Conditioning info uses vq-vae codebook vector as input
             cond_semantic_dim=cond_semantic_dim,
+            num_cameras=num_cameras,
             **kwargs
         )
     

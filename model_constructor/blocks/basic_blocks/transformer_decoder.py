@@ -40,6 +40,7 @@ class TransformerDecoder(nn.Module):
             num_tokens (int): number of tokens given as input to the decoder
             
         """
+        super().__init__()
         self.batch_first = batch_first
         self.tgt_is_causal = tgt_is_causal
         self.num_tokens = num_tokens

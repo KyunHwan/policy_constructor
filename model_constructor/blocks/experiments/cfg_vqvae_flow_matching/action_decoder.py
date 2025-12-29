@@ -67,7 +67,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
             batch_first=transformer_batch_first,
             tgt_is_causal=transformer_tgt_is_causal,
             num_layers=transformer_num_layers,
-            action_chunk_size=transformer_action_chunk_size,
+            num_tokens=transformer_action_chunk_size,
         )
 
         self.output_layer = nn.Sequential(

@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class VQCodebookManager(nn.Module):
     def __init__(self, num_q_vectors, vec_dim):
-
+        super().__init__()
         self.vq_codebook = nn.Embedding(num_q_vectors, vec_dim)
 
         # Optional: Initialize weights to be uniform for better initial convergence

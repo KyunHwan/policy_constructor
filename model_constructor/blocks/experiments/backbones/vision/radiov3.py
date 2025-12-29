@@ -10,7 +10,6 @@ class RadioV3(nn.Module):
     def __init__(self, channels=(1024, 3072)):
         super().__init__()
         self._channels = channels # (img features, img summary features)
-        self._device = None
 
         # Load C-RADIOv3-L from TorchHub
         self.radiov3_version = "c-radio_v3-l" # 448 x 448 (height x width) --> (28, 28) w/ channel size 1024
@@ -24,10 +23,6 @@ class RadioV3(nn.Module):
     @property
     def num_channels(self):
         return self._channels
-
-    @property
-    def device(self):
-        return self._device
 
     def forward(self, image: torch.Tensor):
         """
