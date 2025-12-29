@@ -50,8 +50,8 @@ class VQVAE_Posterior(MultiModalEncoderTemplate):
     def forward(self,
                 cond_proprio: torch.Tensor, # latent proprio features
                 cond_visual: torch.Tensor, # latent visual features
-                action: torch.Tensor | None=None, # latent action features
                 cond_semantic: torch.Tensor | None=None, # latent semantic features
+                action: torch.Tensor | None=None, # latent action features
                 **kwargs) -> torch.Tensor:
         """
             For the below tensor shape and ordering to work, transformer_batch_first should be set to True

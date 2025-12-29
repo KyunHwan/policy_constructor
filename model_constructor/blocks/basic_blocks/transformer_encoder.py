@@ -37,7 +37,8 @@ class TransformerEncoder(nn.Module):
                                   Warning: tgt_is_causal provides a hint that tgt_mask is the causal mask. 
                                   Providing incorrect hints can result in incorrect execution, including forward and backward compatibility.
             
-            num_tokens (int): number of tokens given as input to the encoder
+            num_tokens (int): number of tokens given as input to the encoder.
+                              only beneficial if the masking stays the same. 
             
         """
         self.batch_first = batch_first

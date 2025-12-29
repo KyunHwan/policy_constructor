@@ -25,11 +25,9 @@ class VQVAE_Prior(MultiModalEncoderTemplate):
                  use_cond_semantic_projection: bool,
                  cond_semantic_dim: int | None,
                  
-                 num_q_vectors: int,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.num_q_vectors = num_q_vectors
 
         self.encoder = InformationEncoder(
             cond_proprio_dim=cond_proprio_dim,
@@ -52,14 +50,11 @@ class VQVAE_Prior(MultiModalEncoderTemplate):
             **kwargs
         )
 
-        # managed by the prior since the posterior will be dropped during inference
-        self.vq_codebook = nn.Embedding(num_q_vectors, transformer_d_model)
-
     def forward(self,
                 cond_proprio: torch.Tensor, # latent proprio features
                 cond_visual: torch.Tensor, # latent visual features
-                action: torch.Tensor | None=None, # latent action features
                 cond_semantic: torch.Tensor | None=None, # latent semantic features
+                action: torch.Tensor | None=None, # latent action features
                 **kwargs) -> torch.Tensor:
         """
             For the below tensor shape and ordering to work, transformer_batch_first should be set to True
@@ -79,3 +74,4 @@ class VQVAE_Prior(MultiModalEncoderTemplate):
                             cond_visual=cond_visual,
                             cond_semantic=cond_semantic,
                             action=action,)['cls_token']
+                            

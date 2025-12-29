@@ -29,6 +29,8 @@ class InformationEncoder(MultiModalEncoderTemplate):
                  use_cond_semantic: bool,
                  use_cond_semantic_projection: bool,
                  cond_semantic_dim: int | None,
+
+                 num_cameras: int,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -76,11 +78,15 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 torch.nn.ELU(),
             ]
         )
-        self.visual_projection = torch.nn.Sequential(
-            *[
-                torch.nn.Linear(cond_visual_dim, self.transformer_hidden_dim),
-                torch.nn.ELU(),
-            ]
+
+        self.num_cameras = num_cameras
+        self.visual_projection = nn.ModuleList(
+            [torch.nn.Sequential(
+                *[
+                    torch.nn.Linear(cond_visual_dim, self.transformer_hidden_dim),
+                    torch.nn.ELU(),
+                ]
+            ) for _ in range(num_cameras)]
         )
 
         self.encoder = TransformerEncoder(
@@ -100,15 +106,18 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 cond_visual: torch.Tensor, # latent visual features
                 cond_semantic: torch.Tensor | None=None, # latent semantic features
                 action: torch.Tensor | None=None, # latent action features
-                **kwargs) -> nn.ModuleDict[str, torch.Tensor]:
+                **kwargs) -> dict[str, torch.Tensor]:
         """
             For the below tensor shape and ordering to work, transformer_batch_first should be set to True
 
             Parmaeters:
                 
                 cond_proprio: (batch, sequence, features) shape
-                cond_visual: (batch, num_frames, channel, height, width) or (batch, num_frames, channel, sequence) shape
-                cond_semantic: (batch, features) or (batch, 1, features) shape
+                cond_visual: (batch, num_frames, sequence, channel, height, width) 
+                             (batch, num_frames, channel, height, width) 
+                          or (batch, num_frames, channel, sequence) shape
+                cond_semantic: (batch, features) 
+                            or (batch, 1, features) shape
                 action: (batch, sequence, features) shape
                 
             Output:
@@ -118,26 +127,32 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 }
         """
         assert cond_proprio.ndim == 3 \
-           and (cond_visual.ndim == 5 or cond_visual.ndim == 4) \
+           and (cond_visual.ndim == 6 or cond_visual.ndim == 5 or cond_visual.ndim == 4) \
            and (action is None or action.ndim == 3) \
            and (cond_semantic is None or cond_semantic.ndim == 2 or cond_semantic.ndim == 3)
         
         batch_size = cond_proprio.shape[0]
 
-        output = {
-            'cls_token': None,
-            'encoder_output': None, 
-        }
-
         # proprio data
         proprio_input = self.proprio_projection(cond_proprio)
 
         # visual data
-        if cond_visual.ndim == 5: cond_visual = einops.rearrange(cond_visual, 'b, n, c, h, w -> b n (h w) c')
-        cond_visual = einops.rearrange(cond_visual, 'b, n, s, c -> b (n, s) c')
-        visual_input = self.visual_projection(cond_visual)
+        if cond_visual.ndim == 4: 
+            cond_visual = einops.rearrange(cond_visual, 'b n c s -> b n s c')
+        if cond_visual.ndim == 5: 
+            cond_visual = einops.rearrange(cond_visual, 'b n c h w -> b n (h w) c')
+        if cond_visual.ndim == 6: 
+            cond_visual = einops.rearrange(cond_visual, 'b n t c h w -> b n (t h w) c')
+        
+        if cond_visual.shape[1] != self.num_cameras:
+            raise ValueError(f"Number of cameras {self.num_cameras} != Number of visual frames {cond_visual.shape[1]}")
+        
+        projected_visuals = []
+        for i in range(self.num_cameras):
+            projected_visuals.append(self.visual_projection[i](cond_visual[:, i, :, :]))
+        projected_visual_input = einops.rearrange(torch.cat(projected_visuals, dim=1), 'b n s c -> b (n s) c')
 
-        encoder_input = torch.cat([visual_input, proprio_input], dim=1) 
+        encoder_input = torch.cat([projected_visual_input, proprio_input], dim=1) 
 
         # semantic data
         if self.use_cond_semantic:
@@ -162,8 +177,8 @@ class InformationEncoder(MultiModalEncoderTemplate):
 
         encoder_output = self.encoder(encoder_input)
 
-        output['cls_token'] = encoder_output[:, 0, :] if self.use_cls_token else None
-        output['encoder_output'] = encoder_output
-
-        return output
+        return {
+            'cls_token' : encoder_output[:, 0, :] if self.use_cls_token else None,
+            'encoder_output' : encoder_output
+        }
     

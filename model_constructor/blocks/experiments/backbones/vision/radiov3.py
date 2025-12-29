@@ -4,12 +4,13 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn 
+import torch.nn.functional as F
 
 class RadioV3(nn.Module):
-    def __init__(self, channels=(1024, 3072), device="cuda"):
+    def __init__(self, channels=(1024, 3072)):
         super().__init__()
         self._channels = channels # (img features, img summary features)
-        self._device = torch.device(device)
+        self._device = None
 
         # Load C-RADIOv3-L from TorchHub
         self.radiov3_version = "c-radio_v3-l" # 448 x 448 (height x width) --> (28, 28) w/ channel size 1024
@@ -18,7 +19,7 @@ class RadioV3(nn.Module):
             "radio_model",
             version=self.radiov3_version,
             progress=True,
-        ).to(self.device).eval()
+        )
 
     @property
     def num_channels(self):
@@ -28,7 +29,7 @@ class RadioV3(nn.Module):
     def device(self):
         return self._device
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, image: torch.Tensor):
         """
         x: (C,H,W) or (B,C,H,W), values in [0,255] or [0,1].
         Returns:
@@ -37,28 +38,24 @@ class RadioV3(nn.Module):
                 features: (B, C_feat, H_feat, W_feat)  if feature_fmt='NCHW'
         """
         # Ensure batch dimension
-        if x.dim() == 3:  # (C,H,W) -> (1,C,H,W)
-            x = x.unsqueeze(0)
-        elif x.dim() != 4:
-            raise ValueError(f"Expected 3D or 4D tensor, got shape {x.shape}")
-
-        # Move to device and float32
-        if not x.is_cuda:
-            x = x.to(self.device, dtype=torch.float32)
+        if image.dim() == 3:  # (C,H,W) -> (1,C,H,W)
+            image = image.unsqueeze(0)
+        elif image.dim() != 4:
+            raise ValueError(f"Expected 3D or 4D tensor, got shape {image.shape}")
 
         # Scale to [0,1] if it's likely 0–255
-        if x.max().item() > 1.5:
-            x = x / 255.0
+        if image.max().item() > 1.5:
+            image = image / 255.0
 
         # RADIO requires H,W to be multiples of min_resolution_step
         nearest_res = self.model.get_nearest_supported_resolution(
-            x.shape[-2],
-            x.shape[-1],
+            image.shape[-2],
+            image.shape[-1],
         )
         h, w = nearest_res.height, nearest_res.width
-        if (h, w) != x.shape[-2:]:
-            x = F.interpolate(
-                x,
+        if (h, w) != image.shape[-2:]:
+            image = F.interpolate(
+                image,
                 size=(h, w),
                 mode="bilinear",
                 align_corners=False,
@@ -66,10 +63,17 @@ class RadioV3(nn.Module):
 
         with torch.no_grad():
             # Ask for NCHW feature format so we get a conv-like feature map
-            summary, features = self.model(x, feature_fmt="NCHW")
+            summary, features = self.model(image, feature_fmt="NCHW")
 
         # Wrap in lists to match BaseBackbone interface (single scale)
         return features, summary
+
+
+
+
+
+
+
 
 
 def run_radiov3_test(image_path: str, target_size=(640, 512), device: str = "cpu"):
