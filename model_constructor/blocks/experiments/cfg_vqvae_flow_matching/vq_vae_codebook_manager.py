@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import einops
 
 class VQCodebookManager(nn.Module):
     def __init__(self, num_q_vectors, vec_dim):
@@ -12,11 +13,12 @@ class VQCodebookManager(nn.Module):
     def forward(self, continuous_vec: torch.Tensor):
         """
         Parameters: 
-            continuous_vec: (batch, features) or (batch, 1, features) shape
+            continuous_vec: (batch, features) or (batch, num_vec, features) shape
         
         Returns:
-            q_vec: same shape as continuous_vec, where each last-dim vector is
-                   replaced by its nearest codebook embedding (L2 distance).
+            dictionary of
+                q_vec: same shape as continuous_vec, where each vector is
+                    replaced by its nearest codebook embedding (L2 distance).
         """
         if continuous_vec.dim() < 2:
             raise ValueError(
@@ -29,24 +31,37 @@ class VQCodebookManager(nn.Module):
                 f"({self.vq_codebook.embedding_dim})."
             )
         
-        og_shape = continuous_vec.shape
-        x = continuous_vec.reshape(-1, d)
+        # 2. Capture original shape and Flatten
+        #    Input: (B, T, D) or (B, D) -> Flatten to (B*T, D) or (B, D)
+        original_shape = continuous_vec.shape
+        x_flat = continuous_vec.reshape(-1, d)
 
+        # 3. Calculate Distances (Batch processing)
         with torch.no_grad():
-            # Compute distances in float32 for numerical stability
-            x_f = x.float()  # (N, D)
-            w_f = self.vq_codebook.weight.float()  # (K, D)
+            x_f = x_flat.float()
+            w_f = self.vq_codebook.weight.float()
 
-            # Squared L2 distance
-            x2 = (x_f * x_f).sum(dim=1, keepdim=True)          # (N, 1)
-            w2 = (w_f * w_f).sum(dim=1).unsqueeze(0)           # (1, K)
-            dist = x2 + w2 - 2.0 * (x_f @ w_f.t())             # (N, K)
+            # L2 Distance: ||x - w||^2 = ||x||^2 + ||w||^2 - 2xw
+            # Shapes: x_f (N, D), w_f (K, D)
+            x2 = (x_f * x_f).sum(dim=1, keepdim=True)       # (N, 1)
+            w2 = (w_f * w_f).sum(dim=1).unsqueeze(0)        # (1, K)
+            
+            # (N, 1) + (1, K) - (N, K) -> (N, K)
+            dist = x2 + w2 - 2.0 * (x_f @ w_f.t())
+            
+            # Get indices of nearest neighbors
+            indices = dist.argmin(dim=1)                    # (N,)
 
-            indices = dist.argmin(dim=1)                        # (N,)
+        # 4. Quantize
+        #    Look up the codebook vectors.
+        #    Note: Gradients flow from Loss -> q -> vq_codebook.weight
+        q_flat = self.vq_codebook(indices)                  # (N, D)
 
-        q = self.vq_codebook(indices)  # (N, D), grad -> vq_codebook.weight
-        q = q.view(*og_shape[:-1], d) # Reshape back to match input
+        # 5. Reshape back to original input shape
+        #    (N, D) -> (Batch, Num_Vec, Features)
+        q = q_flat.view(original_shape)
 
+        # 6. Ensure dtype matches input
         if q.dtype != continuous_vec.dtype:
             q = q.to(dtype=continuous_vec.dtype)
 
@@ -63,6 +78,6 @@ class VQCodebookManager(nn.Module):
 
             dists.fill_diagonal_(float('inf'))
 
-            min_dist = dists.min().item()
+            min_dist = dists.min().item() # .item() moves the value to CPU
 
         return min_dist

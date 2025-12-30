@@ -34,6 +34,7 @@ class ConditioningInfoEncoder(MultiModalEncoderTemplate):
             transformer_batch_first=transformer_batch_first,
             transformer_num_layers=transformer_num_layers,
             use_cls_token=False,
+            num_cls_token=0,
             use_action=False,
             action_dim=None,
             use_cond_semantic=use_cond_semantic,

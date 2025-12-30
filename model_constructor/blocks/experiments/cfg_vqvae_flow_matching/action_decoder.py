@@ -90,7 +90,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
                 time: (batch, time) shape; time step in the ODE integration process
                 noise: (batch, sequence, features) shape
                 memory_input: (batch, sequence, features) shape
-                discrete_semantic_input: (batch, features) or (batch, 1, features) shape
+                discrete_semantic_input: (batch, features) or (batch, num_semantic, features) shape
                 
             Output:
                 action: (batch, sequence, feature) shape

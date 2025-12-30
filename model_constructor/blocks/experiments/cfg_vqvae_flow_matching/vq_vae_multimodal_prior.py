@@ -23,6 +23,8 @@ class VQVAE_Prior(MultiModalEncoderTemplate):
                  use_cond_semantic_projection: bool,
                  cond_semantic_dim: int | None,
                  num_cameras: int,
+                 use_cls_token: bool,
+                 num_cls_token: int,
                  
                  **kwargs):
         super().__init__(**kwargs)
@@ -38,7 +40,8 @@ class VQVAE_Prior(MultiModalEncoderTemplate):
             transformer_activation=transformer_activation,
             transformer_batch_first=transformer_batch_first,
             transformer_num_layers=transformer_num_layers,
-            use_cls_token=True,
+            use_cls_token=use_cls_token,
+            num_cls_token=num_cls_token,
             use_action=False,
             action_dim=None,
             use_cond_semantic=use_cond_semantic,

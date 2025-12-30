@@ -22,6 +22,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                  transformer_num_layers: int,
                  
                  use_cls_token: bool,
+                 num_cls_token: int,
                  use_action: bool,
                  action_dim: int | None,
                  use_cond_semantic: bool,
@@ -49,7 +50,8 @@ class InformationEncoder(MultiModalEncoderTemplate):
         
         self.cls_token = None
         if self.use_cls_token:
-            self.cls_token = nn.Parameter(torch.zeros(1, 1, self.transformer_hidden_dim)) # (batch, seq, features)
+            self.num_cls_token = num_cls_token
+            self.cls_token = nn.Parameter(torch.zeros(self.num_cls_token, self.transformer_hidden_dim))
             nn.init.trunc_normal_(self.cls_token, std=0.02)
 
         self.action_projection = None
@@ -113,7 +115,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                              (batch, num_frames, channel, height, width) 
                           or (batch, num_frames, channel, sequence) shape
                 cond_semantic: (batch, features) 
-                            or (batch, 1, features) shape
+                            or (batch, num_semantic, features) shape
                 action: (batch, sequence, features) shape
                 
             Output:
@@ -169,12 +171,12 @@ class InformationEncoder(MultiModalEncoderTemplate):
 
         # cls token
         if self.use_cls_token:
-            encoder_input = torch.cat([self.cls_token.expand(batch_size, -1, -1), encoder_input], dim=1)
+            encoder_input = torch.cat([self.cls_token.expand(batch_size, self.num_cls_token, self.transformer_hidden_dim), encoder_input], dim=1)
 
         encoder_output = self.encoder(encoder_input)
 
         return {
-            'cls_token' : encoder_output[:, 0, :] if self.use_cls_token else None,
+            'cls_token' : encoder_output[:, :self.num_cls_token, :] if self.use_cls_token else None,
             'encoder_output' : encoder_output
         }
     
