@@ -51,3 +51,18 @@ class VQCodebookManager(nn.Module):
             q = q.to(dtype=continuous_vec.dtype)
 
         return q
+    
+    def get_min_pairwise_dist(self):
+        """
+        Returns:
+            Minimum distance between distinct vectors in the codebook.
+        """
+        min_dist = 0.0
+        with torch.no_grad():
+            dists = torch.cdist(self.vq_codebook.weight, self.vq_codebook.weight, p=2)
+
+            dists.fill_diagonal_(float('inf'))
+
+            min_dist = dists.min().item()
+
+        return min_dist
