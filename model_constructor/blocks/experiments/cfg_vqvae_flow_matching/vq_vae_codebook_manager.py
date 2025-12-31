@@ -10,7 +10,7 @@ class VQCodebookManager(nn.Module):
         # Optional: Initialize weights to be uniform for better initial convergence
         self.vq_codebook.weight.data.uniform_(-1.0 / num_q_vectors, 1.0 / num_q_vectors)
     
-    def forward(self, continuous_vec: torch.Tensor):
+    def forward(self, continuous_vec: torch.Tensor, train: bool=True):
         """
         Parameters: 
             continuous_vec: (batch, features) or (batch, num_vec, features) shape
@@ -64,9 +64,20 @@ class VQCodebookManager(nn.Module):
         # 6. Ensure dtype matches input
         if q.dtype != continuous_vec.dtype:
             q = q.to(dtype=continuous_vec.dtype)
+        
+        min_dist = 0.0
+        with torch.no_grad():
+            if train:
+                dists = torch.cdist(self.vq_codebook.weight, self.vq_codebook.weight, p=2)
+                dists.fill_diagonal_(float('inf'))
+                min_dist = dists.min().item()
+        
 
-        return q
-    
+        return {
+            'q': q,
+            'codebook_min_dist': min_dist
+        }
+
     def get_min_pairwise_dist(self):
         """
         Returns:
