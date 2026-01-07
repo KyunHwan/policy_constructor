@@ -8,10 +8,9 @@ class VQCodebookManager(nn.Module):
         self.vq_codebook = nn.Embedding(num_q_vectors, vec_dim)
 
         # Optional: Initialize weights to be uniform for better initial convergence
-        # self.vq_codebook.weight.data.uniform_(-1.0 / num_q_vectors, 1.0 / num_q_vectors)
         with torch.no_grad():
-            self.vq_codebook.weight.zero_()
-            
+            self.vq_codebook.weight.data.uniform_(-1.0 / num_q_vectors, 1.0 / num_q_vectors)
+
     def forward(self, continuous_vec: torch.Tensor, train: bool=True):
         """
         Parameters: 
