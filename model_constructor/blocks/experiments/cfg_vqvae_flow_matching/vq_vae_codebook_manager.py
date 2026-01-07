@@ -71,9 +71,9 @@ class VQCodebookManager(nn.Module):
         with torch.no_grad():
             if train:
                 dists = torch.cdist(self.vq_codebook.weight, self.vq_codebook.weight, p=2)
+                max_dist = dists.max().item()
                 dists.fill_diagonal_(float('inf'))
                 min_dist = dists.min().item()
-                max_dist = dists.max().item()
 
         return {
             'q': q,
