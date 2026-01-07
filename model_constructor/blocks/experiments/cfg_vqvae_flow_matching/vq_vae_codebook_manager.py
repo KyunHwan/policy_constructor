@@ -67,16 +67,18 @@ class VQCodebookManager(nn.Module):
             q = q.to(dtype=continuous_vec.dtype)
         
         min_dist = 0.0
+        max_dist = 0.0
         with torch.no_grad():
             if train:
                 dists = torch.cdist(self.vq_codebook.weight, self.vq_codebook.weight, p=2)
                 dists.fill_diagonal_(float('inf'))
                 min_dist = dists.min().item()
-        
+                max_dist = dists.max().item()
 
         return {
             'q': q,
-            'codebook_min_dist': min_dist
+            'codebook_min_dist': min_dist,
+            'codebook_max_dist': max_dist
         }
 
     def get_min_pairwise_dist(self):
