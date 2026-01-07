@@ -1,0 +1,3 @@
+[submodule "model_constructor/blocks/experiments/backbones/vision/externals/depth_anything_3"]
+	path = model_constructor/blocks/experiments/backbones/vision/externals/depth_anything_3
+	url = https://github.com/ByteDance-Seed/Depth-Anything-3
