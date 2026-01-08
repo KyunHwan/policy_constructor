@@ -56,38 +56,43 @@ class InformationEncoder(MultiModalEncoderTemplate):
 
         self.action_projection = None
         if self.use_action:
-            self.action_projection = nn.Sequential(
-            *[
-                nn.Linear(self.action_dim, transformer_d_model),
-                nn.ELU(),
-            ]
-        )
+            if action_dim != self.transformer_hidden_dim:
+                self.action_projection = nn.Sequential(
+                    *[
+                        nn.Linear(self.action_dim, transformer_d_model),
+                        nn.ELU(),
+                    ]
+                )
         
-        self.semantic_projection = None    
+        self.semantic_projection = None
         if self.use_cond_semantic and self.use_cond_semantic_projection:
-            self.semantic_projection = torch.nn.Sequential(
+            if cond_semantic_dim != self.transformer_hidden_dim:
+                self.semantic_projection = torch.nn.Sequential(
+                    *[
+                        torch.nn.Linear(cond_semantic_dim, self.transformer_hidden_dim),
+                        torch.nn.ELU(),
+                    ]
+                )
+        self.proprio_projection = None
+        if cond_proprio_dim != self.transformer_hidden_dim:
+            self.proprio_projection = torch.nn.Sequential(
                 *[
-                    torch.nn.Linear(cond_semantic_dim, self.transformer_hidden_dim),
+                    torch.nn.Linear(cond_proprio_dim, self.transformer_hidden_dim),
                     torch.nn.ELU(),
                 ]
             )
 
-        self.proprio_projection = torch.nn.Sequential(
-            *[
-                torch.nn.Linear(cond_proprio_dim, self.transformer_hidden_dim),
-                torch.nn.ELU(),
-            ]
-        )
-
         self.num_cameras = num_cameras
-        self.visual_projection = nn.ModuleList(
-            [torch.nn.Sequential(
-                *[
-                    torch.nn.Linear(cond_visual_dim, self.transformer_hidden_dim),
-                    torch.nn.ELU(),
-                ]
-            ) for _ in range(num_cameras)]
-        )
+        self.visual_projection = None
+        if cond_visual_dim != self.transformer_hidden_dim:
+            self.visual_projection = nn.ModuleList(
+                [torch.nn.Sequential(
+                    *[
+                        torch.nn.Linear(cond_visual_dim, self.transformer_hidden_dim),
+                        torch.nn.ELU(),
+                    ]
+                ) for _ in range(num_cameras)]
+            )
 
         self.encoder = NonCausalTransformerEncoder(
             d_model=self.transformer_hidden_dim,
@@ -132,7 +137,10 @@ class InformationEncoder(MultiModalEncoderTemplate):
         batch_size = cond_proprio.shape[0]
 
         # proprio data
-        proprio_input = self.proprio_projection(cond_proprio)
+        if self.proprio_projection is None:
+            proprio_input = cond_proprio
+        else:
+            proprio_input = self.proprio_projection(cond_proprio)
 
         # visual data
         if cond_visual.ndim == 4: 
@@ -147,7 +155,10 @@ class InformationEncoder(MultiModalEncoderTemplate):
         
         projected_visuals = []
         for i in range(self.num_cameras):
-            projected_visuals.append(self.visual_projection[i](einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c')))
+            if self.visual_projection is None:
+                projected_visuals.append(einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c'))
+            else:
+                projected_visuals.append(self.visual_projection[i](einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c')))
         projected_visual_input = einops.rearrange(torch.cat(projected_visuals, dim=1), 'b n s c -> b (n s) c')
 
         encoder_input = torch.cat([projected_visual_input, proprio_input], dim=1) 
@@ -156,14 +167,20 @@ class InformationEncoder(MultiModalEncoderTemplate):
         if self.use_cond_semantic:
             if not self.use_cond_semantic_projection and cond_semantic.shape[-1] != self.transformer_hidden_dim:
                 raise ValueError(f"cond_semantic must have dimension {self.transformer_hidden_dim}, got {cond_semantic.shape[-1]}!")
-            semantic_input = self.semantic_projection(cond_semantic) if self.use_cond_semantic_projection else cond_semantic
+            if self.semantic_projection is None:
+                semantic_input = cond_semantic
+            else:
+                semantic_input = self.semantic_projection(cond_semantic) if self.use_cond_semantic_projection else cond_semantic
             if semantic_input.ndim == 2: 
                 semantic_input = einops.rearrange(semantic_input, 'b d -> b 1 d')
             encoder_input = torch.cat([semantic_input, encoder_input], dim=1)
         
         # action data
         if self.use_action: 
-            action_input = self.action_projection(action)
+            if self.action_projection is None:
+                action_input = action
+            else:
+                action_input = self.action_projection(action)
             encoder_input = torch.cat([action_input, encoder_input], dim=1)
 
         # position embedding
