@@ -23,7 +23,6 @@ class ActionDecoder(FlowMatchingBodyTemplate):
                  transformer_num_layers: int,
                  transformer_action_chunk_size: int,
 
-                 use_cond_semantic_projection: bool,
                  use_cond_semantic: bool = False,
                  cond_semantic_dim: int | None=None,
                  **kwargs):
@@ -33,7 +32,6 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         
         self.transformer_hidden_dim = transformer_d_model
         self.use_cond_semantic = use_cond_semantic
-        self.use_cond_semantic_projection = use_cond_semantic_projection
         self.cond_semantic_dim = cond_semantic_dim
 
         self.noise_projection = nn.Sequential(
@@ -44,7 +42,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         )
 
         self.semantic_projection = None
-        if self.use_cond_semantic and self.use_cond_semantic_projection:
+        if self.use_cond_semantic and self.cond_semantic_dim != self.transformer_hidden_dim:
             self.semantic_projection = nn.Sequential(
                 *[
                     nn.Linear(self.cond_semantic_dim, self.transformer_hidden_dim),
@@ -98,8 +96,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         assert noise.ndim == 3 and memory_input.ndim == 3 and memory_input.shape[2] == self.transformer_hidden_dim
         
         if discrete_semantic_input is not None: 
-           assert (discrete_semantic_input.ndim == 2 and discrete_semantic_input.shape[1] == self.transformer_hidden_dim) \
-               or (discrete_semantic_input.ndim == 3 and discrete_semantic_input.shape[2] == self.transformer_hidden_dim)
+           assert discrete_semantic_input.ndim == 2 or discrete_semantic_input.ndim == 3 
         
         noise_input = self.noise_projection(noise)
         
@@ -116,9 +113,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
 
         # semantic input
         if self.use_cond_semantic:
-            if not self.use_cond_semantic_projection and discrete_semantic_input.shape[-1] != self.transformer_hidden_dim:
-                raise ValueError(f"cond_semantic must have dimension {self.transformer_hidden_dim}, got {discrete_semantic_input.shape[-1]}!")
-            semantic_input = self.semantic_projection(discrete_semantic_input) if self.use_cond_semantic_projection else discrete_semantic_input
+            semantic_input = self.semantic_projection(discrete_semantic_input) if self.semantic_projection is not None else discrete_semantic_input
             if semantic_input.ndim == 2: 
                 semantic_input = einops.rearrange(semantic_input, 'b d -> b 1 d')
             memory_input = torch.cat([semantic_input, memory_input], dim=1)
