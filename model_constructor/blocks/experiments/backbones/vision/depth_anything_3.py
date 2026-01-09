@@ -17,10 +17,10 @@ class DepthAnything3Bridge(nn.Module):
         self.model = DepthAnything3.from_pretrained("depth-anything/DA3-LARGE-1.1")
         self.resize_method = resize_method
         if self.resize_method != 'auto':
-            print("Input resolution will be forced to 336 x 504 (h x w)")
+            print("Depth Anything v3: Input resolution will be forced to 336 x 504 (h x w)")
     
     @torch.inference_mode()
-    def forward(self, image: torch.Tensor, export_feat_layers: list[int] | None=None):
+    def forward(self, image: torch.Tensor, export_feat_layers: list[int]):
         """
         Forward pass through the model.
 
@@ -30,9 +30,9 @@ class DepthAnything3Bridge(nn.Module):
             export_feat_layers: Layer indices to return intermediate features for.
 
         Returns:
-            Dictionary containing model predictions with keys ['depth', 'depth_conf', 'extrinsics', 'intrinsics', 'aux']
+            (Batch, num_features, height, width, feature_dim) shaped latent feature
         """
-        assert len(image.shape) == 4
+        assert len(image.shape) == 4 and len(export_feat_layers) != 0
         
         # Scale to [0,1] if it's likely 0–255
         if image.max().item() > 1.5:
@@ -61,10 +61,17 @@ class DepthAnything3Bridge(nn.Module):
                         mode="bilinear",
                         align_corners=False,
                     )
-
+        latent_features = None
         with torch.no_grad():
-            return self.model(image=einops.rearrange(image, 'b c h w -> b 1 c h w'), 
-                              export_feat_layers=[] if export_feat_layers is None else export_feat_layers)
+            latent_list = []
+            latent_feature_output_dict = self.model(image=einops.rearrange(image, 'b c h w -> b 1 c h w'), 
+                              export_feat_layers=export_feat_layers)['aux']
+            for key in latent_feature_output_dict.keys():
+                latent_list.append(latent_feature_output_dict[key])
+            latent_features = torch.cat(latent_list, dim=1)
+        print(latent_features.shape)
+            
+        return latent_features
 
 
 if __name__ == "__main__":

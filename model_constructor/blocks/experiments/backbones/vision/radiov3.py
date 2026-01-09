@@ -21,7 +21,7 @@ class RadioV3(nn.Module):
         )
         self.resize_method = resize_method
         if self.resize_method != 'auto':
-            print("Input resolution will be forced to 336 x 504 (h x w)")
+            print("Radiov3: Input resolution will be forced to 336 x 504 (h x w)")
 
     @property
     def num_channels(self):
@@ -46,6 +46,17 @@ class RadioV3(nn.Module):
             image = image / 255.0
 
         # RADIO requires H,W to be multiples of min_resolution_step
+        if self.resize_method != 'auto':
+            nearest_res = self.model.get_nearest_supported_resolution(336, 504)
+            h, w = nearest_res.height, nearest_res.width
+            if (h, w) != image.shape[-2:]:
+                image = F.interpolate(
+                    image,
+                    size=(h, w),
+                    mode="bilinear",
+                    align_corners=False,
+                )
+
         if self.resize_method == 'auto':
             nearest_res = self.model.get_nearest_supported_resolution(
                 image.shape[-2],
@@ -59,14 +70,7 @@ class RadioV3(nn.Module):
                     mode="bilinear",
                     align_corners=False,
                 )
-        else:
-            image = F.interpolate(
-                    image,
-                    size=(336, 504),
-                    mode="bilinear",
-                    align_corners=False,
-                )
-
+            
         with torch.no_grad():
             # Ask for NCHW feature format so we get a conv-like feature map
             summary, features = self.model(image, feature_fmt="NCHW")
