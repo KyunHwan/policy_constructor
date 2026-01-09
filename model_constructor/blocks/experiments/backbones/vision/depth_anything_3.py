@@ -69,7 +69,6 @@ class DepthAnything3Bridge(nn.Module):
             for key in latent_feature_output_dict.keys():
                 latent_list.append(latent_feature_output_dict[key])
             latent_features = torch.cat(latent_list, dim=1)
-        print(latent_features.shape)
             
         return latent_features
 
