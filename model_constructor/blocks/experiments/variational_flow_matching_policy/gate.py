@@ -29,7 +29,6 @@ class Gate(nn.Module):
             (batch, num_experts) shape
         """
         if len(input.shape) == 3:
-            assert input.shape[1] != 1
             input = einops.rearrange(input, 'b 1 d -> b d')
             
         return self.last_gating_func(self.model(input))

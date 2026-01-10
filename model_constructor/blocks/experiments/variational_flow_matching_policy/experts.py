@@ -48,14 +48,24 @@ class MoE(nn.Module):
             ) 
             for _ in range(self.num_experts)])
         
-    def forward(self, 
-                expert_id: int,
+    def forward(self,
                 time: torch.Tensor,
                 noise: torch.Tensor, 
                 memory_input: torch.Tensor, # memory input as cross-attention
                 discrete_semantic_input: torch.Tensor | None=None,
                 **kwargs) -> torch.Tensor:
-        return self.experts[expert_id](time, noise, memory_input, discrete_semantic_input, **kwargs)
+        
+        outs = []
+        for expert in self.experts:
+            outs.append(
+                expert(
+                    time=time,
+                    noise=noise,
+                    memory_input=memory_input,
+                    discrete_semantic_input=discrete_semantic_input,
+                )
+            )
+        return einops.rearrange(torch.stack(outs, dim=0), 'e b s d -> b e s d')
 
 
 """ Expert """
