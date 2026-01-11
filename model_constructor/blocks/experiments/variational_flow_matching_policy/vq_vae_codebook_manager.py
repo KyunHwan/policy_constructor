@@ -137,11 +137,12 @@ class VQCodebookManager(nn.Module):
                     # indices shape: (Batch * Sequence_Length)
                     counts = torch.bincount(indices, minlength=self.num_q_vectors)
 
-                    threshold = max(int(torch.sum(counts) / self.num_q_vectors), 1)
-
                     # 2. Synchronize counts across all GPUs (DDP)
                     if distributed.is_initialized():
                         distributed.all_reduce(counts, op=distributed.ReduceOp.SUM)
+
+                    # should come after the all-reduce
+                    threshold = max(int(torch.sum(counts) / self.num_q_vectors), 1)
 
                     # 3. Identify dead indices
                     # dead_mask = counts < threshold
