@@ -26,7 +26,7 @@ class Gate(nn.Module):
             ]
         )
         
-    def forward(self, input: torch.Tensor, iterations: int, training: bool=False, use_noise: bool=False,):
+    def forward(self, input: torch.Tensor, iterations: int | None=None, training: bool=False, use_noise: bool=False,):
         """
         Args:
             input: (batch, feature_dim) shape
@@ -48,3 +48,20 @@ class Gate(nn.Module):
         router_probs = F.softmax(noisy_logits / self.temperature, dim=-1)
 
         return router_probs
+    @torch.inference_mode()
+    def inference(self, input):
+        """
+        Args:
+            input: (batch, feature_dim) shape
+        
+        Return:
+            (batch, num_experts) shape
+        """
+        with torch.no_grad():
+            router_probs = self.forward(input=input, iterations=None, training=False, use_noise=False)
+        
+        return router_probs.argmax(dim=-1).squeeze().item()
+    
+
+
+
