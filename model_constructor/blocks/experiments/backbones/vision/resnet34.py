@@ -4,10 +4,11 @@ import einops
 import torch.nn.functional as F
 
 class Resnet34(nn.Module):
-    def __init__(self, resize: list[int, int] | None):
+    def __init__(self, resize: bool, resize_spec: list[int, int] | None):
         super().__init__()
         self.model = models.resnet34(pretrained=True)
-        self.image_resize = resize
+        self.image_resize = resize_spec
+        self.resize = resize
     
     def forward(self, image):
         """
@@ -20,7 +21,7 @@ class Resnet34(nn.Module):
         if len(image.shape) == 3:
             image = einops.rearrange(image, 'c h w -> 1 c h w')
             
-        if self.image_resize is not None:
+        if self.resize and self.image_resize is not None:
             h, w = self.image_resize
             image = F.interpolate(
                         image,

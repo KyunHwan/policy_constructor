@@ -56,3 +56,16 @@ def register_blocks(registry: Registry) -> None:
     registry.register_module("vfp_prior", vfp_prior.VQVAE_Prior, signature_policy="strict", tags=("experimental", "prior"))
     registry.register_module("vfp_vqvae_codebook", vfp_vqvae_codebook.VQCodebookManager, signature_policy="strict", tags=("experimental", "vqcodebook"))
     registry.register_module("vfp_proprio_projector", vfp_proprio_projector.ProprioProjector, signature_policy="strict", tags=("experimental", "projection"))
+
+    """ VFP """
+    from .experiments.mutual_inf_est import (
+        action_decoder as a_decoder,
+        action_encoder as a_encoder,
+        state_resnet34_decoder as state_decoder,
+        state_resnet34_encoder as state_encoder,
+    )
+
+    registry.register_module("a_decoder", a_decoder.ActionDecoder, signature_policy="strict", tags=("experimental", "action_decoder"))
+    registry.register_module("a_encoder", a_encoder.ActionEncoder, signature_policy="strict", tags=("experimental", "action_encoder"))
+    registry.register_module("state_decoder", state_decoder.ResNet34DecoderGroup, signature_policy="strict", tags=("experimental", "state_decoder"))
+    registry.register_module("state_encoder", state_encoder.ResNet34EncoderGroup, signature_policy="strict", tags=("experimental", "state_encoder"))
