@@ -48,6 +48,7 @@ class Gate(nn.Module):
         router_probs = F.softmax(noisy_logits / self.temperature, dim=-1)
 
         return router_probs
+        
     @torch.inference_mode()
     def inference(self, input):
         """
