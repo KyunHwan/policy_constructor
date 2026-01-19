@@ -66,7 +66,19 @@ class MoE(nn.Module):
                 )
             )
         return einops.rearrange(torch.stack(outs, dim=0), 'e b s d -> b e s d')
-
+    
+    @torch.inference_mode()
+    def inference(self, expert_id: int,
+                  time: torch.Tensor, 
+                  noise: torch.Tensor,
+                  memory_input: torch.Tensor,
+                  discrete_semantic_input: torch.Tensor | None=None,
+                  **kwargs) -> torch.Tensor:
+        return self.experts[expert_id](
+                            time=time,
+                            noise=noise,
+                            memory_input=memory_input,
+                            discrete_semantic_input=discrete_semantic_input,)
 
 """ Expert """
 
