@@ -85,7 +85,7 @@ class ResidualMLP(torch.nn.Module):
         hidden = width * hidden_mult
         self.norm = torch.nn.LayerNorm(width)
         self.fc1 = torch.nn.Linear(width, hidden)
-        self.act = torch.nn.GELU()
+        self.act = torch.nn.SiLU()
         self.drop = torch.nn.Dropout(dropout)
         self.fc2 = torch.nn.Linear(hidden, width)
 
@@ -173,7 +173,7 @@ class TokenMLP(torch.nn.Module):
         hidden = width * hidden_mult
         self.norm = torch.nn.LayerNorm(width)
         self.fc1 = torch.nn.Linear(width, hidden)
-        self.act = torch.nn.GELU()
+        self.act = torch.nn.SiLU()
         self.drop = torch.nn.Dropout(dropout)
         self.fc2 = torch.nn.Linear(hidden, width)
 

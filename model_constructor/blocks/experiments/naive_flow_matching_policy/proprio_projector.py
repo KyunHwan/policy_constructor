@@ -18,9 +18,9 @@ class ProprioProjector(nn.Module):
             self.proprio_projection = torch.nn.Sequential(
                 *[
                     torch.nn.Linear(cond_proprio_dim, self.transformer_hidden_dim * 2),
-                    torch.nn.ELU(),
+                    torch.nn.SiLU(),
                     torch.nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim * 2),
-                    torch.nn.ELU(),
+                    torch.nn.SiLU(),
                     torch.nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
                     nn.LayerNorm(self.transformer_hidden_dim)
                 ]

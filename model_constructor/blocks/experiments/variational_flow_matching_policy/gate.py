@@ -17,12 +17,13 @@ class Gate(nn.Module):
             *[
                 nn.Linear(self.input_dim, self.input_dim * 2),
                 nn.LayerNorm(self.input_dim * 2),
-                nn.ELU(),
+                nn.SiLU(),
                 nn.Linear(self.input_dim * 2, self.input_dim * 2),
                 nn.LayerNorm(self.input_dim * 2),
-                nn.ELU(),
+                nn.SiLU(),
                 nn.Linear(self.input_dim * 2, self.num_experts),
                 nn.LayerNorm(self.num_experts),
+                nn.SiLU(),
             ]
         )
         

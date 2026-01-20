@@ -38,7 +38,7 @@ class TokenMixer(torch.nn.Module):
         super().__init__()
         self.net = torch.nn.Sequential(
             torch.nn.Linear(width, width),
-            torch.nn.GELU(),
+            torch.nn.SiLU(),
             torch.nn.Dropout(dropout),
         )
 

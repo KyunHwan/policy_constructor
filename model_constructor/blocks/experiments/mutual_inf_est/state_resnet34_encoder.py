@@ -64,11 +64,11 @@ class ResNet34EncoderGroup(nn.Module):
         assert len(data.keys()) == self.num_images + 1
 
         outputs = []
-        for i, key in enumerate(data.keys()):
-            if key != 'state':
-                outputs.append(nn.Flatten(self.img_encoders[i](data[key])))
-            else:
-                outputs.append(nn.Flatten(data[key]))
+        for i in range(self.num_images):
+            outputs.append(torch.flatten(self.img_encoders[i](data[f'cam_{i}']), start_dim=1))
+            
+        outputs.append(torch.flatten(data['state'], start_dim=1))
+
         return {
             'embedding': self.state_encoder(torch.cat(outputs, dim=1))
         }

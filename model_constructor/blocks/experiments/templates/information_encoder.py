@@ -60,7 +60,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 self.action_projection = nn.Sequential(
                     *[
                         nn.Linear(self.action_dim, transformer_d_model),
-                        nn.ELU(),
+                        nn.SiLU(),
                     ]
                 )
         
@@ -70,7 +70,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 self.semantic_projection = torch.nn.Sequential(
                     *[
                         torch.nn.Linear(cond_semantic_dim, self.transformer_hidden_dim),
-                        torch.nn.ELU(),
+                        torch.nn.SiLU(),
                     ]
                 )
         self.proprio_projection = None
@@ -78,7 +78,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
             self.proprio_projection = torch.nn.Sequential(
                 *[
                     torch.nn.Linear(cond_proprio_dim, self.transformer_hidden_dim),
-                    torch.nn.ELU(),
+                    torch.nn.SiLU(),
                 ]
             )
 
@@ -89,7 +89,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 [torch.nn.Sequential(
                     *[
                         torch.nn.Linear(cond_visual_dim, self.transformer_hidden_dim),
-                        torch.nn.ELU(),
+                        torch.nn.SiLU(),
                     ]
                 ) for _ in range(num_cameras)]
             )

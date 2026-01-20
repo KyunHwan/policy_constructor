@@ -6,7 +6,8 @@ import torch.nn.functional as F
 class Resnet34(nn.Module):
     def __init__(self, resize: bool, resize_spec: list[int, int] | None):
         super().__init__()
-        self.model = models.resnet34(pretrained=True)
+        self.encoder = models.resnet34(pretrained=True)
+        self.model = nn.Sequential(*list(self.encoder.children())[:-2])
         self.image_resize = resize_spec
         self.resize = resize
     
@@ -29,5 +30,4 @@ class Resnet34(nn.Module):
                         mode="bilinear",
                         align_corners=False,
                     )
-        
         return self.model(image)

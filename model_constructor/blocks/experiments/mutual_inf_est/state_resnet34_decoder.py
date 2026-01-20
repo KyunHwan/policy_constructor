@@ -33,7 +33,7 @@ class ResNet34DecoderGroup(nn.Module):
             for _ in range(num_images)
         ])
         self.img_decoders = nn.ModuleList([
-            ResNet34Decoder(out_channels=out_channels, norm_layer=nn.BatchNorm2d, final_activation="sigmoid") 
+            ResNet34Decoder(out_channels=out_channels, norm_layer=nn.BatchNorm2d, final_activation=final_activation) 
             for _ in range(num_images)
         ])
         
@@ -58,7 +58,7 @@ class ResNet34DecoderGroup(nn.Module):
         """
         output = {}
         for i in range(len(self.img_decoders)):
-            output[f'cam_{i}'] = self.img_decoders[i](self.emb_to_img_dec(embedding).view(embedding.shape[0], 
+            output[f'cam_{i}'] = self.img_decoders[i](self.emb_to_img_dec[i](embedding).view(embedding.shape[0], 
                                                                                           self.input_channels,
                                                                                           self.img_dec_img_size,
                                                                                           self.img_dec_img_size))

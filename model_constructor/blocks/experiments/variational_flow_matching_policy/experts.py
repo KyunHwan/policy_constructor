@@ -110,7 +110,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         self.noise_projection = nn.Sequential(
             *[
                 nn.Linear(action_dim, transformer_d_model),
-                nn.ELU(),
+                nn.SiLU(),
             ]
         )
 
@@ -119,7 +119,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
             self.semantic_projection = nn.Sequential(
                 *[
                     nn.Linear(self.cond_semantic_dim, self.transformer_hidden_dim),
-                    nn.ELU(),
+                    nn.SiLU(),
                 ]
             )
 
@@ -143,7 +143,7 @@ class ActionDecoder(FlowMatchingBodyTemplate):
 
         self.output_layer = nn.Sequential(
             *[
-                nn.ELU(),
+                nn.SiLU(),
                 nn.Linear(transformer_d_model, action_dim),
             ]
         )

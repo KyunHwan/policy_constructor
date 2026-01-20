@@ -18,9 +18,9 @@ class ProprioProjector(nn.Module):
             self.proprio_projection = nn.Sequential(
                 *[
                     nn.Linear(cond_proprio_dim, self.transformer_hidden_dim * 2),
-                    nn.ELU(),
+                    nn.SiLU(),
                     nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
-                    nn.ELU(),
+                    nn.SiLU(),
                     nn.Linear(self.transformer_hidden_dim, self.transformer_hidden_dim),
                 ]
             )
