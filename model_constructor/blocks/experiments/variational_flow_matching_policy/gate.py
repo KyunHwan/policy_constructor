@@ -13,19 +13,13 @@ class Gate(nn.Module):
         self.temperature = temperature
         self.top_k = top_k
 
-        self.model = nn.Sequential(
-            *[
-                nn.Linear(self.input_dim, self.input_dim * 2),
-                nn.LayerNorm(self.input_dim * 2),
-                nn.SiLU(),
-                nn.Linear(self.input_dim * 2, self.input_dim * 2),
-                nn.LayerNorm(self.input_dim * 2),
-                nn.SiLU(),
-                nn.Linear(self.input_dim * 2, self.num_experts),
-                nn.LayerNorm(self.num_experts),
-                nn.SiLU(),
-            ]
-        )
+        self.model = nn.Sequential(*[
+            nn.LayerNorm(self.input_dim),
+            nn.Linear(self.input_dim, self.input_dim * 2),
+            nn.SiLU(),
+            nn.Dropout(p=0.2),
+            nn.Linear(self.input_dim * 2, self.num_experts),
+        ])
         
     def forward(self, input: torch.Tensor, iterations: int, training: bool=False, use_noise: bool=False,):
         """
@@ -49,17 +43,3 @@ class Gate(nn.Module):
         router_probs = F.softmax(noisy_logits / self.temperature, dim=-1)
 
         return router_probs
-
-    @torch.inference_mode()
-    def inference(self, input):
-        """
-        Args:
-            input: (batch, feature_dim) shape
-        
-        Return:
-            (batch, num_experts) shape
-        """
-        with torch.no_grad():
-            router_probs = self.forward(input=input, iterations=None, training=False, use_noise=False)
-        
-        return router_probs.argmax(dim=-1).squeeze().item()

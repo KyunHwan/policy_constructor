@@ -17,12 +17,14 @@ class ProprioProjector(nn.Module):
         if cond_proprio_dim != self.transformer_hidden_dim:
             self.proprio_projection = torch.nn.Sequential(
                 *[
-                    torch.nn.Linear(cond_proprio_dim, self.transformer_hidden_dim * 2),
-                    torch.nn.SiLU(),
-                    torch.nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim * 2),
-                    torch.nn.SiLU(),
-                    torch.nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
-                    torch.nn.SiLU(),
+                    nn.LayerNorm(cond_proprio_dim),
+                    nn.Linear(cond_proprio_dim, self.transformer_hidden_dim * 2),
+                    nn.SiLU(),
+                    nn.Dropout(p=0.05),
+                    nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim * 2),
+                    nn.SiLU(),
+                    nn.Dropout(p=0.05),
+                    nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
                 ]
             )
 

@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 import einops
 
-from .multimodal_encoder import MultiModalEncoderTemplate
+from ..templates.multimodal_encoder import MultiModalEncoderTemplate
 from ...basic_blocks.transformer_encoder import NonCausalTransformerEncoder
 from ..utils.pos_encoding import get_sinusoidal_pos_encoding
 
 
 
-class InformationEncoder(MultiModalEncoderTemplate):
+class InfoEmbedder(MultiModalEncoderTemplate):
     def __init__(self, 
                  cond_proprio_dim: int,
                  cond_visual_dim: int,
@@ -28,8 +28,6 @@ class InformationEncoder(MultiModalEncoderTemplate):
                  use_cond_semantic: bool,
                  use_cond_semantic_projection: bool,
                  cond_semantic_dim: int | None,
-
-                 num_cameras: int,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -64,7 +62,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                         nn.SiLU(),
                         nn.Dropout(p=0.0),
                         nn.Linear(2 * transformer_d_model, transformer_d_model),
-                        nn.LayerNorm(transformer_d_model),
+                        nn.LayerNorm(self.transformer_hidden_dim),
                     ]
                 )
         
@@ -78,7 +76,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                         nn.SiLU(),
                         nn.Dropout(p=0.0),
                         nn.Linear(2 * transformer_d_model, transformer_d_model),
-                        nn.LayerNorm(transformer_d_model),
+                        nn.LayerNorm(self.transformer_hidden_dim),
                     ]
                 )
         self.proprio_projection = None
@@ -90,26 +88,23 @@ class InformationEncoder(MultiModalEncoderTemplate):
                     nn.SiLU(),
                     nn.Dropout(p=0.0),
                     nn.Linear(2 * transformer_d_model, transformer_d_model),
-                    nn.LayerNorm(transformer_d_model),
+                    nn.LayerNorm(self.transformer_hidden_dim),
                 ]
             )
 
-        self.num_cameras = num_cameras
         self.visual_projection = None
         if cond_visual_dim != self.transformer_hidden_dim:
-            self.visual_projection = nn.ModuleList(
-                [torch.nn.Sequential(
+            self.visual_projection = torch.nn.Sequential(
                     *[
                         nn.LayerNorm(cond_visual_dim),
                         nn.Linear(cond_visual_dim, 2 * transformer_d_model),
                         nn.SiLU(),
                         nn.Dropout(p=0.0),
                         nn.Linear(2 * transformer_d_model, transformer_d_model),
-                        nn.LayerNorm(transformer_d_model),
+                        nn.LayerNorm(self.transformer_hidden_dim),
                     ]
-                ) for _ in range(num_cameras)]
-            )
-
+                )
+            
         self.encoder = NonCausalTransformerEncoder(
             d_model=self.transformer_hidden_dim,
             nhead=transformer_nhead,
@@ -132,9 +127,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
             Parameters:
                 
                 cond_proprio: (batch, sequence, features) shape
-                cond_visual: (batch, num_frames, sequence, channel, height, width) 
-                             (batch, num_frames, channel, height, width) 
-                          or (batch, num_frames, channel, sequence) shape
+                cond_visual: (batch, sequence, features) shape
                 cond_semantic: (batch, features) 
                             or (batch, num_semantic, features) shape
                 action: (batch, sequence, features) shape
@@ -146,7 +139,7 @@ class InformationEncoder(MultiModalEncoderTemplate):
                 }
         """
         assert cond_proprio.ndim == 3 \
-           and (cond_visual.ndim == 6 or cond_visual.ndim == 5 or cond_visual.ndim == 4) \
+           and cond_visual.ndim == 3 \
            and (action is None or action.ndim == 3) \
            and (cond_semantic is None or cond_semantic.ndim == 2 or cond_semantic.ndim == 3)
         
@@ -157,27 +150,10 @@ class InformationEncoder(MultiModalEncoderTemplate):
             proprio_input = cond_proprio
         else:
             proprio_input = self.proprio_projection(cond_proprio)
-
-        # visual data
-        if cond_visual.ndim == 4: 
-            cond_visual = einops.rearrange(cond_visual, 'b n c s -> b n s c')
-        if cond_visual.ndim == 5: 
-            cond_visual = einops.rearrange(cond_visual, 'b n c h w -> b n (h w) c')
-        if cond_visual.ndim == 6: 
-            cond_visual = einops.rearrange(cond_visual, 'b n t c h w -> b n (t h w) c')
         
-        if cond_visual.shape[1] != self.num_cameras:
-            raise ValueError(f"Number of cameras {self.num_cameras} != Number of visual frames {cond_visual.shape[1]}")
-        
-        projected_visuals = []
-        for i in range(self.num_cameras):
-            if self.visual_projection is None:
-                projected_visuals.append(einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c'))
-            else:
-                projected_visuals.append(self.visual_projection[i](einops.rearrange(cond_visual[:, i, :, :], 'b s c -> b 1 s c')))
-        projected_visual_input = einops.rearrange(torch.cat(projected_visuals, dim=1), 'b n s c -> b (n s) c')
-
-        encoder_input = torch.cat([projected_visual_input, proprio_input], dim=1) 
+        if self.visual_projection is not None:
+            cond_visual = self.visual_projection(cond_visual)
+        encoder_input = torch.cat([cond_visual, proprio_input], dim=1) 
 
         # semantic data
         if self.use_cond_semantic:

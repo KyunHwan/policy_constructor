@@ -71,11 +71,9 @@ class RadioV3(nn.Module):
                     align_corners=False,
                 )
             
-        with torch.no_grad():
-            # Ask for NCHW feature format so we get a conv-like feature map
-            summary, features = self.model(image, feature_fmt="NCHW")
+        # Ask for NCHW feature format so we get a conv-like feature map
+        summary, features = self.model(image, feature_fmt="NCHW")
 
-        # Wrap in lists to match BaseBackbone interface (single scale)
         return features, summary
 
 

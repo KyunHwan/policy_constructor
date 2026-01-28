@@ -34,9 +34,13 @@ def register_blocks(registry: Registry) -> None:
     """ Naive Flow Matching Policy """
     from .experiments.naive_flow_matching_policy import (
         action_decoder as naive_action_decoder,
-        proprio_projector as naive_proprio_projector
+        proprio_projector as naive_proprio_projector,
+        info_embedder as naive_info_embedder,
+        hand_extractor as naive_hand_extractor,
     )
 
+    registry.register_module("naive_hand_extractor", naive_hand_extractor.ResNet34Encoder, signature_policy="strict", tags=("experimental", "embedding"))
+    registry.register_module("naive_info_embedder", naive_info_embedder.InfoEmbedder, signature_policy="strict", tags=("experimental", "embedding"))
     registry.register_module("naive_action_decoder", naive_action_decoder.ActionDecoder, signature_policy="strict", tags=("experimental", "decoder"))
     registry.register_module("naive_proprio_projector", naive_proprio_projector.ProprioProjector, signature_policy="strict", tags=("experimental", "projection"))
     
@@ -47,9 +51,13 @@ def register_blocks(registry: Registry) -> None:
         posterior as vfp_posterior,
         prior as vfp_prior,
         vq_vae_codebook_manager as vfp_vqvae_codebook,
-        proprio_projector as vfp_proprio_projector
+        proprio_projector as vfp_proprio_projector,
+        info_embedder as vfp_info_embedder,
+        hand_extractor as vfp_hand_extractor,
     )
 
+    registry.register_module("vfp_hand_extractor", vfp_hand_extractor.ResNet34Encoder, signature_policy="strict", tags=("experimental", "embedding"))
+    registry.register_module("vfp_info_embedder", vfp_info_embedder.InfoEmbedder, signature_policy="strict", tags=("experimental", "embedding"))
     registry.register_module("vfp_moe", vfp_experts.MoE, signature_policy="strict", tags=("experimental", "moe"))
     registry.register_module("vfp_gate", vfp_gate.Gate, signature_policy="strict", tags=("experimental", "gate"))
     registry.register_module("vfp_posterior", vfp_posterior.VQVAE_Posterior, signature_policy="strict", tags=("experimental", "posterior"))
@@ -57,7 +65,7 @@ def register_blocks(registry: Registry) -> None:
     registry.register_module("vfp_vqvae_codebook", vfp_vqvae_codebook.VQCodebookManager, signature_policy="strict", tags=("experimental", "vqcodebook"))
     registry.register_module("vfp_proprio_projector", vfp_proprio_projector.ProprioProjector, signature_policy="strict", tags=("experimental", "projection"))
 
-    """ VFP """
+    """ Mutual Information Encoder """
     from .experiments.mutual_inf_est import (
         action_decoder as a_decoder,
         action_encoder as a_encoder,
@@ -69,3 +77,17 @@ def register_blocks(registry: Registry) -> None:
     registry.register_module("a_encoder", a_encoder.ActionEncoder, signature_policy="strict", tags=("experimental", "action_encoder"))
     registry.register_module("state_decoder", state_decoder.ResNet34DecoderGroup, signature_policy="strict", tags=("experimental", "state_decoder"))
     registry.register_module("state_encoder", state_encoder.ResNet34EncoderGroup, signature_policy="strict", tags=("experimental", "state_encoder"))
+
+    """ VFP """
+    from .experiments.vfp_single_expert import (
+        action_decoder as vfp_single_action_decoder,
+        posterior as vfp_single_posterior,
+        prior as vfp_single_prior,
+        info_embedder as vfp_single_info_embedder,
+    )
+
+    registry.register_module("vfp_single_action_decoder", vfp_single_action_decoder.ActionDecoder, signature_policy="strict", tags=("experimental", "decoder"))
+    registry.register_module("vfp_single_info_embedder", vfp_single_info_embedder.InfoEmbedder, signature_policy="strict", tags=("experimental", "embedding"))
+    registry.register_module("vfp_single_posterior", vfp_single_posterior.VAE_Posterior, signature_policy="strict", tags=("experimental", "posterior"))
+    registry.register_module("vfp_single_prior", vfp_single_prior.VAE_Prior, signature_policy="strict", tags=("experimental", "prior"))
+    

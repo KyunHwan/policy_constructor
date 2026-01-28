@@ -66,19 +66,6 @@ class MoE(nn.Module):
                 )
             )
         return einops.rearrange(torch.stack(outs, dim=0), 'e b s d -> b e s d')
-    
-    @torch.inference_mode()
-    def inference(self, expert_id: int,
-                  time: torch.Tensor, 
-                  noise: torch.Tensor,
-                  memory_input: torch.Tensor,
-                  discrete_semantic_input: torch.Tensor | None=None,
-                  **kwargs) -> torch.Tensor:
-        return self.experts[expert_id](
-                            time=time,
-                            noise=noise,
-                            memory_input=memory_input,
-                            discrete_semantic_input=discrete_semantic_input,)
 
 """ Expert """
 
@@ -109,8 +96,11 @@ class ActionDecoder(FlowMatchingBodyTemplate):
 
         self.noise_projection = nn.Sequential(
             *[
-                nn.Linear(action_dim, transformer_d_model),
+                nn.LayerNorm(action_dim),
+                nn.Linear(action_dim, self.transformer_hidden_dim * 2),
                 nn.SiLU(),
+                nn.Dropout(p=0.05),
+                nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
             ]
         )
 
@@ -118,15 +108,20 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         if self.use_cond_semantic and self.cond_semantic_dim != self.transformer_hidden_dim:
             self.semantic_projection = nn.Sequential(
                 *[
-                    nn.Linear(self.cond_semantic_dim, self.transformer_hidden_dim),
+                    nn.LayerNorm(cond_semantic_dim),
+                    nn.Linear(cond_semantic_dim, self.transformer_hidden_dim * 2),
                     nn.SiLU(),
+                    nn.Dropout(p=0.05),
+                    nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
                 ]
             )
 
         self.time_mlp = nn.Sequential(
-            nn.Linear(transformer_d_model, transformer_d_model * 2),
-            nn.SiLU(), # SiLU is standard for diffusion/flow MLPs
-            nn.Linear(transformer_d_model * 2, transformer_d_model),
+            nn.LayerNorm(self.transformer_hidden_dim),
+            nn.Linear(self.transformer_hidden_dim, self.transformer_hidden_dim * 2),
+            nn.SiLU(),
+            nn.Dropout(p=0.05),
+            nn.Linear(self.transformer_hidden_dim * 2, self.transformer_hidden_dim),
         )
 
         self.decoder = TransformerDecoder(
@@ -143,8 +138,9 @@ class ActionDecoder(FlowMatchingBodyTemplate):
 
         self.output_layer = nn.Sequential(
             *[
+                nn.Linear(self.transformer_hidden_dim, self.transformer_hidden_dim * 2),
                 nn.SiLU(),
-                nn.Linear(transformer_d_model, action_dim),
+                nn.Linear(self.transformer_hidden_dim * 2, action_dim),
             ]
         )
 
@@ -169,14 +165,14 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         assert noise.ndim == 3 and memory_input.ndim == 3 and memory_input.shape[2] == self.transformer_hidden_dim
         
         if discrete_semantic_input is not None: 
-           assert discrete_semantic_input.ndim == 2 or discrete_semantic_input.ndim == 3 
+           assert discrete_semantic_input.ndim == 2 or discrete_semantic_input.ndim == 3
         
         noise_input = self.noise_projection(noise)
         
         
         # conditioning
-        memory_input = memory_input + \
-                       get_sinusoidal_pos_encoding(memory_input.shape[1], self.transformer_hidden_dim, memory_input.device)
+        # memory_input = memory_input + \
+        #                get_sinusoidal_pos_encoding(memory_input.shape[1], self.transformer_hidden_dim, memory_input.device)
 
         # time embedding for flow matching
         if time.ndim > 1: time = time.squeeze(-1)
@@ -196,3 +192,4 @@ class ActionDecoder(FlowMatchingBodyTemplate):
         output = self.output_layer(decoded_output)
 
         return output
+    
