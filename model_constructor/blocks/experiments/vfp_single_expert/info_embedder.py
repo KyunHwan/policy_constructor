@@ -11,7 +11,9 @@ from ..utils.pos_encoding import get_sinusoidal_pos_encoding
 class InfoEmbedder(MultiModalEncoderTemplate):
     def __init__(self, 
                  cond_proprio_dim: int,
+
                  cond_visual_dim: int,
+                 num_cond_visuals: int,
 
                  transformer_d_model: int,
                  transformer_nhead: int,
@@ -25,8 +27,11 @@ class InfoEmbedder(MultiModalEncoderTemplate):
                  num_cls_token: int,
                  use_action: bool,
                  action_dim: int | None,
+
                  use_cond_semantic: bool,
                  use_cond_semantic_projection: bool,
+                 num_cond_semantic: int,
+
                  cond_semantic_dim: int | None,
                  **kwargs):
         super().__init__(**kwargs)
@@ -45,6 +50,9 @@ class InfoEmbedder(MultiModalEncoderTemplate):
         self.cond_semantic_dim = cond_semantic_dim
 
         self.use_cls_token = use_cls_token
+
+        self.num_cond_visuals = num_cond_visuals
+        self.num_cond_semantic = num_cond_semantic
         
         self.cls_token = None
         if self.use_cls_token:
@@ -67,18 +75,17 @@ class InfoEmbedder(MultiModalEncoderTemplate):
                 )
         
         self.semantic_projection = None
-        if self.use_cond_semantic and self.use_cond_semantic_projection:
-            if cond_semantic_dim != self.transformer_hidden_dim:
-                self.semantic_projection = torch.nn.Sequential(
-                    *[
-                        nn.LayerNorm(cond_semantic_dim),
-                        nn.Linear(cond_semantic_dim, 2 * transformer_d_model),
-                        nn.SiLU(),
-                        nn.Dropout(p=0.0),
-                        nn.Linear(2 * transformer_d_model, transformer_d_model),
-                        nn.LayerNorm(self.transformer_hidden_dim),
-                    ]
-                )
+        if cond_semantic_dim != self.transformer_hidden_dim:
+            self.semantic_projection = nn.ModuleList([torch.nn.Sequential(
+                *[
+                    nn.LayerNorm(cond_semantic_dim),
+                    nn.Linear(cond_semantic_dim, 2 * transformer_d_model),
+                    nn.SiLU(),
+                    nn.Dropout(p=0.0),
+                    nn.Linear(2 * transformer_d_model, transformer_d_model),
+                    nn.LayerNorm(self.transformer_hidden_dim),
+                ]) for _ in range(self.num_cond_semantic)])
+                
         self.proprio_projection = None
         if cond_proprio_dim != self.transformer_hidden_dim:
             self.proprio_projection = torch.nn.Sequential(
@@ -94,7 +101,7 @@ class InfoEmbedder(MultiModalEncoderTemplate):
 
         self.visual_projection = None
         if cond_visual_dim != self.transformer_hidden_dim:
-            self.visual_projection = torch.nn.Sequential(
+            self.visual_projection = nn.ModuleList([torch.nn.Sequential(
                     *[
                         nn.LayerNorm(cond_visual_dim),
                         nn.Linear(cond_visual_dim, 2 * transformer_d_model),
@@ -103,7 +110,9 @@ class InfoEmbedder(MultiModalEncoderTemplate):
                         nn.Linear(2 * transformer_d_model, transformer_d_model),
                         nn.LayerNorm(self.transformer_hidden_dim),
                     ]
-                )
+                ) for _ in range(self.num_cond_visuals)
+                ]
+            )
             
         self.encoder = NonCausalTransformerEncoder(
             d_model=self.transformer_hidden_dim,
@@ -117,8 +126,8 @@ class InfoEmbedder(MultiModalEncoderTemplate):
 
     def forward(self,
                 cond_proprio: torch.Tensor, # latent proprio features
-                cond_visual: torch.Tensor, # latent visual features
-                cond_semantic: torch.Tensor | None=None, # latent semantic features
+                cond_visual: list[torch.Tensor], # latent visual features
+                cond_semantic: list[torch.Tensor] | None=None, # latent semantic features
                 action: torch.Tensor | None=None, # latent action features
                 **kwargs) -> dict[str, torch.Tensor]:
         """
@@ -128,8 +137,7 @@ class InfoEmbedder(MultiModalEncoderTemplate):
                 
                 cond_proprio: (batch, sequence, features) shape
                 cond_visual: (batch, sequence, features) shape
-                cond_semantic: (batch, features) 
-                            or (batch, num_semantic, features) shape
+                cond_semantic: (batch, num_semantic, features) shape
                 action: (batch, sequence, features) shape
                 
             Output:
@@ -139,9 +147,9 @@ class InfoEmbedder(MultiModalEncoderTemplate):
                 }
         """
         assert cond_proprio.ndim == 3 \
-           and cond_visual.ndim == 3 \
+           and cond_visual[0].ndim == 3 \
            and (action is None or action.ndim == 3) \
-           and (cond_semantic is None or cond_semantic.ndim == 2 or cond_semantic.ndim == 3)
+           and (cond_semantic is None or cond_semantic[0].ndim == 3)
         
         batch_size = cond_proprio.shape[0]
 
@@ -151,21 +159,19 @@ class InfoEmbedder(MultiModalEncoderTemplate):
         else:
             proprio_input = self.proprio_projection(cond_proprio)
         
+        encoder_input = proprio_input
         if self.visual_projection is not None:
-            cond_visual = self.visual_projection(cond_visual)
-        encoder_input = torch.cat([cond_visual, proprio_input], dim=1) 
+            for i in range(self.num_cond_visuals):
+                encoder_input = torch.cat([self.visual_projection[i](cond_visual[i]), encoder_input], dim=1) 
 
         # semantic data
-        if self.use_cond_semantic:
-            if not self.use_cond_semantic_projection and cond_semantic.shape[-1] != self.transformer_hidden_dim:
-                raise ValueError(f"cond_semantic must have dimension {self.transformer_hidden_dim}, got {cond_semantic.shape[-1]}!")
+        if cond_semantic is not None:
             if self.semantic_projection is None:
-                semantic_input = cond_semantic
+                for i in range(self.num_cond_semantic):
+                    encoder_input = torch.cat([cond_semantic[i] , encoder_input], dim=1)
             else:
-                semantic_input = self.semantic_projection(cond_semantic) if self.use_cond_semantic_projection else cond_semantic
-            if semantic_input.ndim == 2: 
-                semantic_input = einops.rearrange(semantic_input, 'b d -> b 1 d')
-            encoder_input = torch.cat([semantic_input, encoder_input], dim=1)
+                for i in range(self.num_cond_semantic):
+                    encoder_input = torch.cat([self.semantic_projection[i](cond_semantic[i]) , encoder_input], dim=1)
         
         # action data
         if self.use_action: 
