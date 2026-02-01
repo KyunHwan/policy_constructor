@@ -84,10 +84,12 @@ def register_blocks(registry: Registry) -> None:
         posterior as vfp_single_posterior,
         prior as vfp_single_prior,
         info_embedder as vfp_single_info_embedder,
+        multimodal_bridge as vfp_single_mmb
     )
 
     registry.register_module("vfp_single_action_decoder", vfp_single_action_decoder.ActionDecoder, signature_policy="strict", tags=("experimental", "decoder"))
     registry.register_module("vfp_single_info_embedder", vfp_single_info_embedder.InfoEmbedder, signature_policy="strict", tags=("experimental", "embedding"))
+    registry.register_module("vfp_single_multimodal_bridge", vfp_single_mmb.MultiModalBridge, signature_policy="strict", tags=("experimental", "embedding"))
     registry.register_module("vfp_single_posterior", vfp_single_posterior.VAE_Posterior, signature_policy="strict", tags=("experimental", "posterior"))
     registry.register_module("vfp_single_prior", vfp_single_prior.VAE_Prior, signature_policy="strict", tags=("experimental", "prior"))
     
