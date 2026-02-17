@@ -92,4 +92,8 @@ def register_blocks(registry: Registry) -> None:
     registry.register_module("vfp_single_multimodal_bridge", vfp_single_mmb.MultiModalBridge, signature_policy="strict", tags=("experimental", "embedding"))
     registry.register_module("vfp_single_posterior", vfp_single_posterior.VAE_Posterior, signature_policy="strict", tags=("experimental", "posterior"))
     registry.register_module("vfp_single_prior", vfp_single_prior.VAE_Prior, signature_policy="strict", tags=("experimental", "prior"))
-    
+
+    """ OpenPI Batched Wrapper """
+    from .experiments.third_party.openpi.openpi_batched_wrapper import OpenPiBatchedWrapper
+
+    registry.register_module("openpi_batched", OpenPiBatchedWrapper, signature_policy="strict", tags=("experimental", "openpi", "vla"))
