@@ -222,11 +222,20 @@ class OpenPiBatchedWrapper(nn.Module):
             ]
         )
 
+        # Filter norm_stats to only "actions" for the output transform.
+        # sample_actions() only returns actions (not state), and Unnormalize
+        # uses strict=True which requires all norm_stats keys in the data dict.
+        output_norm_stats = (
+            {k: v for k, v in norm_stats.items() if k == "actions"}
+            if norm_stats is not None
+            else None
+        )
+
         self._output_transform = transforms.compose(
             [
                 *data_config.model_transforms.outputs,
                 transforms.Unnormalize(
-                    norm_stats,
+                    output_norm_stats,                          # was: norm_stats
                     use_quantiles=data_config.use_quantile_norm,
                 ),
                 *data_config.data_transforms.outputs,
