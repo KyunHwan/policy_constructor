@@ -97,3 +97,21 @@ def register_blocks(registry: Registry) -> None:
     from .experiments.third_party.openpi.openpi_batched_wrapper import OpenPiBatchedWrapper
 
     registry.register_module("openpi_batched", OpenPiBatchedWrapper, signature_policy="strict", tags=("experimental", "openpi", "vla"))
+
+    """ DSRL """
+    from .experiments.dsrl.q_function import Q_Function
+    from .experiments.dsrl.noise_latent_actor import Noise_Latent_Actor
+    # Both processor files define a class named NoiseActorImgDepthProprioProcessor.
+    # q_function_img_depth_proprio_processor concatenates depth+img+proprio+action (for Q(s,a)).
+    # noise_actor_img_depth_proprio_processor concatenates depth+img+proprio only (for π(ε|s)).
+    from .experiments.dsrl.q_function_img_depth_proprio_processor import (
+        NoiseActorImgDepthProprioProcessor as QFunctionImgDepthProprioProcessor,
+    )
+    from .experiments.dsrl.noise_actor_img_depth_proprio_processor import (
+        NoiseActorImgDepthProprioProcessor as NoiseActorImgDepthProprioProcessor_,
+    )
+
+    registry.register_module("dsrl_q_function", Q_Function, signature_policy="strict", tags=("experimental", "dsrl"))
+    registry.register_module("dsrl_noise_latent_actor", Noise_Latent_Actor, signature_policy="strict", tags=("experimental", "dsrl"))
+    registry.register_module("dsrl_q_function_processor", QFunctionImgDepthProprioProcessor, signature_policy="strict", tags=("experimental", "dsrl"))
+    registry.register_module("dsrl_noise_actor_processor", NoiseActorImgDepthProprioProcessor_, signature_policy="strict", tags=("experimental", "dsrl"))
