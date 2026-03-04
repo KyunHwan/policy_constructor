@@ -19,7 +19,7 @@ class DepthAnything3Bridge(nn.Module):
         if self.resize_method != 'auto':
             print("Depth Anything v3: Input resolution will be forced to 336 x 504 (h x w)")
     
-    def forward(self, image: torch.Tensor, export_feat_layers: list[int]):
+    def forward(self, image: torch.Tensor, export_feat_layers: list[int]=[23]):
         """
         Forward pass through the model.
 
@@ -27,6 +27,7 @@ class DepthAnything3Bridge(nn.Module):
             image: Input batch with shape (B, 3, H, W) on the model device.
                    Need to change it to (B, 1, 3, H, W) internally.
             export_feat_layers: Layer indices to return intermediate features for.
+                                Last layer is 23.
 
         Returns:
             (Batch, num_features, height, width, feature_dim) shaped latent feature

@@ -9,7 +9,9 @@ def register_blocks(registry: Registry) -> None:
     # Vision 
     from .experiments.backbones.vision.radiov3 import RadioV3
     from .experiments.backbones.vision.depth_anything_3 import DepthAnything3Bridge
+    from.experiments.backbones.vision.resnet34 import Resnet34
 
+    registry.register_module("resnet34", Resnet34, signature_policy="strict", tags=("experimental", "backbone"))
     registry.register_module("radiov3", RadioV3, signature_policy="strict", tags=("experimental", "backbone"))
     registry.register_module("da3", DepthAnything3Bridge, signature_policy="strict", tags=("experimental", "backbone"))
 
@@ -101,16 +103,14 @@ def register_blocks(registry: Registry) -> None:
     """ DSRL """
     from .experiments.dsrl.q_function import Q_Function
     from .experiments.dsrl.noise_latent_actor import Noise_Latent_Actor
-    # Both processor files define a class named NoiseActorImgDepthProprioProcessor.
-    # q_function_img_depth_proprio_processor concatenates depth+img+proprio+action (for Q(s,a)).
-    # noise_actor_img_depth_proprio_processor concatenates depth+img+proprio only (for π(ε|s)).
+
     from .experiments.dsrl.q_function_img_depth_proprio_processor import (
-        NoiseActorImgDepthProprioProcessor as QFunctionImgDepthProprioProcessor,
+        QFunctionImgDepthProprioProcessor,
     )
     from .experiments.dsrl.noise_actor_img_depth_proprio_processor import (
         NoiseActorImgDepthProprioProcessor as NoiseActorImgDepthProprioProcessor_,
     )
-
+    
     registry.register_module("dsrl_q_function", Q_Function, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_noise_latent_actor", Noise_Latent_Actor, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_q_function_processor", QFunctionImgDepthProprioProcessor, signature_policy="strict", tags=("experimental", "dsrl"))
