@@ -110,8 +110,10 @@ def register_blocks(registry: Registry) -> None:
     from .experiments.dsrl.noise_actor_img_depth_proprio_processor import (
         NoiseActorImgDepthProprioProcessor as NoiseActorImgDepthProprioProcessor_,
     )
+    from .experiments.dsrl.tri_img_embedder import Resnet34Group
     
     registry.register_module("dsrl_q_function", Q_Function, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_noise_latent_actor", Noise_Latent_Actor, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_q_function_processor", QFunctionImgDepthProprioProcessor, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_noise_actor_processor", NoiseActorImgDepthProprioProcessor_, signature_policy="strict", tags=("experimental", "dsrl"))
+    registry.register_module("dsrl_img_encoder", Resnet34Group, signature_policy="strict", tags=("experimental", "dsrl"))
