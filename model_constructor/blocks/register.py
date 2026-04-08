@@ -117,3 +117,10 @@ def register_blocks(registry: Registry) -> None:
     registry.register_module("dsrl_q_function_processor", QFunctionImgDepthProprioProcessor, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_noise_actor_processor", NoiseActorImgDepthProprioProcessor_, signature_policy="strict", tags=("experimental", "dsrl"))
     registry.register_module("dsrl_img_encoder", Resnet34Group, signature_policy="strict", tags=("experimental", "dsrl"))
+
+    """ Resfit """
+    from .experiments.resfit.residual_actor import Residual_Actor
+    from .experiments.resfit.residual_q_function import Q_Function as Resfit_Q_Function
+
+    registry.register_module("resfit_residual_actor", Residual_Actor, signature_policy="strict", tags=("experimental", "resfit"))
+    registry.register_module("resfit_q_function", Resfit_Q_Function, signature_policy="strict", tags=("experimental", "resfit"))
