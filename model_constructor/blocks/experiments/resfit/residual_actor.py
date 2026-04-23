@@ -177,7 +177,7 @@ class Residual_Actor(nn.Module):
                     in_features = num_hidden_dim, 
                     out_features = self.action_dim
                 ),
-                nn.Tanh() # in order to prevent going outside the domain of the Gaussian noise
+                nn.Tanh() # in order to prevent going outside the domain
         )
 
         # === apply init AFTER modules are built ===
@@ -219,7 +219,7 @@ class Residual_Actor(nn.Module):
         flattened_tensor = self.preprocessor(preprocessor_input)
 
         intermediate_output = self.model(flattened_tensor)
-        updated_action = self.last_layer(intermediate_output)
+        updated_action = 0.25 * self.last_layer(intermediate_output)
         
         return updated_action
 
