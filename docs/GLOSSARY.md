@@ -2,9 +2,15 @@
 
 Every codebase-specific term and every research term you'll encounter in the experimental blocks. One or two sentences each, plus a "see also" pointer.
 
-Entries are grouped: **codebase terms**, **PyTorch terms used here**, and **research / policy terms**.
-
 If a term has a specific technical meaning in this repo that differs from its general ML meaning, that's flagged.
+
+## Contents
+
+- [Codebase terms](#codebase-terms) — registry, spec, signature policy, GraphIR, source map, runtime reference, return policy, schema v1, lazy module, etc.
+- [PyTorch terms used heavily here](#pytorch-terms-used-heavily-here) — `nn.Module`, `nn.ModuleDict`, lazy modules, parameters, buffers, `.eval()`, `torch.no_grad()`.
+- [Research / policy terms](#research--policy-terms-used-by-the-experimental-blocks) — flow matching, VQ-VAE, CFG, prior/posterior, MoE, VFP, DSRL, ResFit, OpenPI/PI0, RadioV3, DA3, ResNet34, etc.
+
+To find a specific term, use your browser's find-in-page (`Ctrl+F` / `Cmd+F`) — every entry is an H3 heading matching the term exactly.
 
 ---
 

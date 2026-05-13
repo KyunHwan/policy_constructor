@@ -4,6 +4,23 @@ This document is the conceptual map. If a senior engineer were walking you throu
 
 If a term is unfamiliar, see [GLOSSARY.md](GLOSSARY.md).
 
+## Contents
+
+- [Why this repo exists](#why-this-repo-exists)
+- [The two layers](#the-two-layers)
+- [The two YAML frontends](#the-two-yaml-frontends)
+- [Modules vs ops](#modules-vs-ops)
+- [`_type_` vs `_target_`: why `_type_` is the default](#_type_-vs-_target_-why-_type_-is-the-default)
+- [Signature policies — strict, best_effort, runtime_only](#signature-policies--strict-best_effort-runtime_only)
+- [DAG-only — why forward references are forbidden](#dag-only--why-forward-references-are-forbidden)
+- [Lazy modules and the `null` trick](#lazy-modules-and-the-null-trick)
+- [Weight sharing — call the same module twice](#weight-sharing--call-the-same-module-twice)
+- [The two extension points](#the-two-extension-points)
+- [`GraphIR` vs `GraphModel` — data vs executor](#graphir-vs-graphmodel--data-vs-executor)
+- [The role of `Settings`](#the-role-of-settings)
+- [Putting it together — the build pipeline, refined](#putting-it-together--the-build-pipeline-refined)
+- [Open questions for the maintainer](#open-questions-for-the-maintainer)
+
 ---
 
 ## Why this repo exists

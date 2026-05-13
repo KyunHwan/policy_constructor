@@ -10,6 +10,25 @@ The Python package is `model_constructor`; all imports use:
 from model_constructor import build_model
 ```
 
+## Contents
+
+- [What this repo is (and is not)](#what-this-repo-is-and-is-not)
+- [Features](#features)
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+- [Repository layout](#repository-layout)
+- [Concepts and architecture](#concepts-and-architecture)
+- [How to extend](#how-to-extend)
+- [Configuration](#configuration)
+- [Integration (training / inference repositories)](#integration-training--inference-repositories)
+- [Testing and quality](#testing-and-quality)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Documentation map](#documentation-map)
+- [License](#license)
+
+New to the repo? Open [docs/QUICKSTART.md](docs/QUICKSTART.md) for the first-hour walkthrough or [docs/INDEX.md](docs/INDEX.md) for navigation by task.
+
 ## What this repo is (and is not)
 
 **Is**

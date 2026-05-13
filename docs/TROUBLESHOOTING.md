@@ -4,6 +4,19 @@ Decision-tree errors guide. Find the error your `build_model()` call printed; fo
 
 If your error isn't here, search the file for any keyword that appears in the message — error messages in this codebase are intentionally specific (the resolver, compiler, and instantiator each include the `config_path` and source `location` in their messages).
 
+## Contents
+
+- [Before you ask for help — quick checklist](#before-you-ask-for-help--quick-checklist)
+- [Error class decision tree](#error-class-decision-tree)
+- [`CompatibilityError`](#compatibilityerror)
+- [`ConfigError` — most common, organized by message](#configerror--most-common-organized-by-message)
+- [`RegistryError`](#registryerror)
+- [`GraphExecutionError` — forward pass failed](#graphexecutionerror--forward-pass-failed)
+- ["Build succeeded, but the forward pass fails" — debugging recipes](#build-succeeded-but-the-forward-pass-fails--debugging-recipes)
+- [When to file a bug](#when-to-file-a-bug)
+
+**Finding a specific error message:** the H2 sections above are categories; each one contains H3 subsections for individual error messages (about 45 in total). Use your browser's or editor's find-in-page (`Ctrl+F` / `Cmd+F`) and paste a unique substring of your error — every message-level subsection's heading matches the error text exactly.
+
 ---
 
 ## Before you ask for help — quick checklist
