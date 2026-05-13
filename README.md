@@ -750,21 +750,30 @@ pytest              # verify tests pass
 
 ## Documentation map
 
-**Start here**
-- [`model_constructor/README.md`](model_constructor/README.md) — internal architecture and extension tutorials
-- [`model_constructor/config/schema_v1.md`](model_constructor/config/schema_v1.md) — normative YAML contract
+**Start here for navigation**: [`docs/INDEX.md`](docs/INDEX.md) — single hub that routes you to the right doc by what you're trying to do.
 
-**Guides**
-- [`model_constructor/config/authoring_yaml.md`](model_constructor/config/authoring_yaml.md) — how to write YAML configs
-- [`examples/end_to_end.md`](examples/end_to_end.md) — two-parent-repo submodule workflow
+If you prefer a linear reading order:
+
+1. **First hour, copy-paste path** — [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
+2. **How to think about this repo** — [`docs/MENTAL_MODEL.md`](docs/MENTAL_MODEL.md)
+3. **What every term means** — [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
+4. **When something breaks** — [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) (or the "Troubleshooting" section above)
+5. **Normative YAML contract** — [`model_constructor/config/schema_v1.md`](model_constructor/config/schema_v1.md)
+6. **Practical YAML authoring** — [`model_constructor/config/authoring_yaml.md`](model_constructor/config/authoring_yaml.md)
+7. **Two-repo submodule workflow** — [`examples/end_to_end.md`](examples/end_to_end.md)
+8. **Internal architecture & extension tutorials** — [`model_constructor/README.md`](model_constructor/README.md)
 
 **Component docs (near the code)**
-- [`model_constructor/blocks/README.md`](model_constructor/blocks/README.md)
-- [`model_constructor/config/README.md`](model_constructor/config/README.md)
-- [`model_constructor/graph/README.md`](model_constructor/graph/README.md)
-- [`model_constructor/instantiate/README.md`](model_constructor/instantiate/README.md)
-- [`model_constructor/registry/README.md`](model_constructor/registry/README.md)
-- [`model_constructor/util/README.md`](model_constructor/util/README.md)
+- [`model_constructor/blocks/README.md`](model_constructor/blocks/README.md) — custom-block extension points
+- [`model_constructor/blocks/basic_blocks/README.md`](model_constructor/blocks/basic_blocks/README.md) — reusable `nn.Module` primitives
+- [`model_constructor/blocks/experiments/README.md`](model_constructor/blocks/experiments/README.md) — experimental policy components and registry keys
+- [`model_constructor/config/README.md`](model_constructor/config/README.md) — YAML resolution pipeline overview
+- [`model_constructor/graph/README.md`](model_constructor/graph/README.md) — GraphIR and GraphModel
+- [`model_constructor/instantiate/README.md`](model_constructor/instantiate/README.md) — spec-to-object engine
+- [`model_constructor/registry/README.md`](model_constructor/registry/README.md) — module/op registry
+- [`model_constructor/util/README.md`](model_constructor/util/README.md) — plugin imports mechanism
+- [`configs/README.md`](configs/README.md) — example configs walkthrough
+- [`tests/README.md`](tests/README.md) — test suite and how to add tests
 
 ## License
 
